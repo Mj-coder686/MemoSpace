@@ -179,7 +179,7 @@ test.describe('MemoSpace V1.2 social and reminder acceptance', () => {
       await modal.getByLabel('把提醒发给谁').selectOption(String(b.id))
       await modal.locator('input[type="file"]').setInputFiles({ name: `reminder-${runId}.png`, mimeType: 'image/png', buffer: PNG })
       await modal.getByRole('button', { name: '创建提醒' }).click()
-      await expect(a.page.getByRole('status')).toContainText('提醒已发给好友')
+      await expect(a.page.locator('p.relationship-notice.success')).toContainText('提醒已发给好友')
 
       const aReminders = await browserRequest(a, 'GET', '/api/reminders', requestEvidence)
       const created = (aReminders.body as Array<Record<string, unknown>>).find(item => item.title === reminderTitle)
