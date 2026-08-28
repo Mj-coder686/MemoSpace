@@ -1,0 +1,66 @@
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: memo-space
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/memospace;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      encoding: UTF-8
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:memospace_redis_2026}
+      timeout: 2s
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 100MB
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: Asia/Shanghai
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  cache-enabled: ${REDIS_CACHE_ENABLED:false}
+  demo-data:
+    enabled: ${DEMO_DATA_ENABLED:true}
+  jwt:
+    secret: ${JWT_SECRET:MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:168}
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  storage:
+    mode: ${STORAGE_MODE:local}
+    local-path: ${LOCAL_STORAGE_PATH:./data/uploads}
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:memospace_minio}
+    secret-key: ${MINIO_SECRET_KEY:memospace_minio_2026}
+    bucket: ${MINIO_BUCKET:memospace-private}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.memospace: INFO
