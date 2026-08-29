@@ -224,7 +224,7 @@ h1, h2, .serif { font-family: 'Noto Serif SC', serif; letter-spacing: -.02em; }
 .timeline-item { position:relative;margin-bottom:18px; }
 .timeline-item::before { content:'';position:absolute;left:-32px;top:25px;width:11px;height:11px;border:4px solid var(--space-background,var(--paper));border-radius:50%;background:var(--space-primary,var(--accent));box-shadow:0 0 0 1px var(--space-primary,var(--accent)); }
 .timeline-date { margin-bottom:7px;color:color-mix(in srgb,var(--space-muted,var(--muted)) 62%,#27262b);font-size:11px;font-weight:500;letter-spacing:.08em; }
-.timeline-card { padding:20px;border:1px solid color-mix(in srgb,var(--space-text,var(--ink)) 20%,transparent);border-radius:21px;background:var(--surface); }
+.timeline-card { display:block;overflow:hidden;padding:20px;border:1px solid color-mix(in srgb,var(--space-text,var(--ink)) 20%,transparent);border-radius:21px;color:inherit;background:var(--surface); }
 .timeline-card h3 { margin:0 0 8px;font:600 17px 'Noto Serif SC',serif; }
 .timeline-card p { margin:0;color:color-mix(in srgb,var(--space-muted,var(--muted)) 62%,#27262b);line-height:1.7; }
 .space-hero { position:relative;overflow:hidden;margin:-42px calc((1180px - 100vw)/2) 35px;padding:65px max(32px,calc((100vw - 1180px)/2));color:var(--space-text);background:linear-gradient(135deg,var(--space-background),color-mix(in srgb,var(--space-primary) 18%,white)); }

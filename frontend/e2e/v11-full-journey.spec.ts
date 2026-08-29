@@ -340,6 +340,11 @@ test.describe('MemoSpace V1.1 product repair acceptance', () => {
       await a.page.goto(`/space/${relationshipSpaceId}`)
       await expect(a.page.getByRole('heading', { name: relationshipSpaceName, level: 1 })).toBeVisible()
       await expect(a.page.getByRole('link', { name: relationshipMemory.title })).toBeVisible()
+      const timelineCardLayout = await a.page.locator('.timeline-card').first().evaluate(card => ({
+        display: getComputedStyle(card).display,
+        fragments: card.getClientRects().length,
+      }))
+      expect(timelineCardLayout).toEqual({ display: 'block', fragments: 1 })
       screenshots.push(await screenshot(a.page, testInfo, '04-hidden-category-data-survives'))
 
       await a.page.goto('/relationships')
