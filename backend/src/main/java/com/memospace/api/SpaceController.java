@@ -34,5 +34,16 @@ public class SpaceController {
         return spaces.updateTheme(CurrentUser.id(), id, request.name(), request.themeId());
     }
 
+    @PutMapping("/{id}/appearance")
+    public Map<String, Object> appearance(@PathVariable long id, @Valid @RequestBody AppearanceRequest request) {
+        return spaces.updateAppearance(CurrentUser.id(), id, request.name(), request.themeId(),
+                request.primaryColor(), request.backgroundColor(), request.textColor(), request.backgroundFileId(),
+                request.backgroundBrightness(), request.backgroundOverlay(), request.clearBackgroundImage());
+    }
+
     public record ThemeRequest(@Size(max = 80) String name, @Positive long themeId) {}
+    public record AppearanceRequest(@Size(max = 80) String name, @Positive Long themeId,
+                                    String primaryColor, String backgroundColor, String textColor,
+                                    @Positive Long backgroundFileId, Integer backgroundBrightness,
+                                    Integer backgroundOverlay, boolean clearBackgroundImage) {}
 }

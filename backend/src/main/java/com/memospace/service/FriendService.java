@@ -1,6 +1,7 @@
 package com.memospace.service;
 
 import com.memospace.api.ApiException;
+import com.memospace.realtime.RealtimeNotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -13,9 +14,11 @@ import java.util.Map;
 @Service
 public class FriendService {
     private final JdbcTemplate jdbc;
+    private final RealtimeNotificationPublisher realtime;
 
-    public FriendService(JdbcTemplate jdbc) {
+    public FriendService(JdbcTemplate jdbc, RealtimeNotificationPublisher realtime) {
         this.jdbc = jdbc;
+        this.realtime = realtime;
     }
 
     public List<Map<String, Object>> list(long userId) {
@@ -66,6 +69,8 @@ public class FriendService {
         jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) " +
                         "VALUES(?,?,'FRIEND_REQUEST','收到好友申请',?,?)",
                 receiverId, senderId, message == null || message.isBlank() ? "对方希望添加你为好友" : message.trim(), requestId);
+        realtime.publishAfterCommit(receiverId, "FRIEND_REQUEST", "收到好友申请",
+                message == null || message.isBlank() ? "对方希望添加你为好友" : message.trim(), requestId);
         return requestView(requestId);
     }
 
@@ -96,6 +101,8 @@ public class FriendService {
         jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) " +
                         "VALUES(?,?,'FRIEND_ACCEPT','好友申请已通过','现在可以开始私聊和共同安排提醒了',?)",
                 senderId, receiverId, friendshipId);
+        realtime.publishAfterCommit(senderId, "FRIEND_ACCEPT", "好友申请已通过",
+                "现在可以开始私聊和共同安排提醒了", friendshipId);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", requestId);

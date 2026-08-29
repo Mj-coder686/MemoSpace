@@ -78,13 +78,35 @@ public class AuthService {
         UserAccount user = users.selectById(userId);
         if (nickname != null && !nickname.isBlank()) user.setNickname(nickname.trim());
         if (bio != null) user.setBio(bio.trim());
-        if (avatar != null) user.setAvatar(avatar.trim());
+        if (avatar != null) {
+            String value = avatar.trim();
+            if (value.matches("^/api/files/\\d+/content$")) {
+                long fileId = Long.parseLong(value.replaceAll("\\D", ""));
+                requireOwnedAvatar(userId, fileId);
+            }
+            user.setAvatar(value);
+        }
         if (gender != null) user.setGender(gender);
         if (birthday != null) user.setBirthday(birthday);
         if (location != null) user.setLocation(location.trim());
         user.setUpdatedAt(LocalDateTime.now());
         users.updateById(user);
         return publicProfile(user);
+    }
+
+    public Map<String, Object> updateAvatar(long userId, long fileId) {
+        requireOwnedAvatar(userId, fileId);
+        UserAccount user = users.selectById(userId);
+        user.setAvatar("/api/files/" + fileId + "/content");
+        user.setUpdatedAt(LocalDateTime.now());
+        users.updateById(user);
+        return publicProfile(user);
+    }
+
+    private void requireOwnedAvatar(long userId, long fileId) {
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM file_record WHERE id=? AND owner_id=? AND mime_type LIKE 'image/%'",
+                Integer.class, fileId, userId);
+        if (count == null || count == 0) throw new ApiException(HttpStatus.BAD_REQUEST, "头像图片不存在或不属于你");
     }
 
     public void changePassword(long userId, String oldPassword, String newPassword) {

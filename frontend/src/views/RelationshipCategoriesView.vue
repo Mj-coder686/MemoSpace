@@ -7,6 +7,7 @@ import {
 } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import { useAuthStore } from '../stores/auth'
+import UserAvatar from '../components/UserAvatar.vue'
 
 type Category = {
   id: number
@@ -259,13 +260,13 @@ onMounted(async () => {
       </form>
       <div v-if="people.length" class="people-results" role="listbox" aria-label="用户搜索结果">
         <button v-for="person in people" :key="person.id" type="button" @click="choosePerson(person)">
-          <span class="person-avatar">{{ (person.nickname || person.username)?.slice(0, 1) }}</span>
+          <UserAvatar class="person-avatar" :src="person.avatar" :name="person.nickname||person.username" />
           <span><b>{{ person.nickname }}</b><small>@{{ person.username }} · {{ person.location || '未填写所在地' }}</small></span>
           <UserPlus :size="17" />
         </button>
       </div>
       <div v-if="selectedPerson" class="selected-person">
-        <span class="person-avatar">{{ (selectedPerson.nickname || selectedPerson.username)?.slice(0, 1) }}</span>
+        <UserAvatar class="person-avatar" :src="selectedPerson.avatar" :name="selectedPerson.nickname||selectedPerson.username" />
         <span><small>准备邀请</small><b>{{ selectedPerson.nickname || selectedPerson.username }}</b></span>
       </div>
 

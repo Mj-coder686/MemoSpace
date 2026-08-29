@@ -11,6 +11,8 @@ export interface User {
   avatar?: string
   bio?: string
   location?: string
+  gender?: string
+  birthday?: string
 }
 
 const normalizeUser = (value: User): User => ({ ...value, publicId: value.publicId || value.public_id })

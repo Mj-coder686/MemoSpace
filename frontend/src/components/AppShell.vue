@@ -4,20 +4,51 @@ import { useRouter } from 'vue-router'
 import { AlarmClock, Bell, BookHeart, CalendarDays, Compass, Home, Images, MapPin, MessageCircle, Plus, Search, Settings, Sparkles, Users } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { useRealtimeStore } from '../stores/realtime'
+import type { RealtimeEvent } from '../stores/realtime'
+import http from '../api/http'
 import CreateMemoryModal from './CreateMemoryModal.vue'
+import UserAvatar from './UserAvatar.vue'
+import { loadAppearance } from '../utils/appearance'
 
 const auth = useAuthStore()
 const realtime = useRealtimeStore()
 const router = useRouter()
 const creating = ref(false)
 const search = ref('')
+const unreadNotifications = ref(0)
+const liveNotice = ref<{ title:string; content:string; path:string } | null>(null)
+let unsubscribeRealtime: (() => void) | undefined
+let noticeTimer: number | undefined
+const clearUnread = () => { unreadNotifications.value=0 }
 
 const runSearch = () => {
   if (search.value.trim()) router.push({ path: '/memories', query: { q: search.value.trim() } })
 }
 
-onMounted(() => realtime.connect())
-onBeforeUnmount(() => realtime.disconnect())
+const showLiveNotice = (event:RealtimeEvent) => {
+  if (event.type !== 'NOTIFICATION' && event.type !== 'REMINDER_DUE') return
+  unreadNotifications.value += 1
+  const reminder = event.type === 'REMINDER_DUE'
+  liveNotice.value = {
+    title:String(event.title || (reminder ? '提醒时间到了' : '收到新消息')),
+    content:String(event.content || event.note || (reminder ? '点开查看这条重要提醒' : '共同空间有了新动静')),
+    path:reminder ? '/reminders'
+      : event.notificationType === 'FRIEND_REQUEST' || event.notificationType === 'FRIEND_ACCEPT' ? '/friends'
+      : event.notificationType === 'SPACE_MEMORY' && event.referenceId ? `/memory/${event.referenceId}` : '/notifications'
+  }
+  window.clearTimeout(noticeTimer)
+  noticeTimer=window.setTimeout(()=>{liveNotice.value=null},6000)
+}
+const openNotice = () => { if(liveNotice.value) router.push(liveNotice.value.path); liveNotice.value=null }
+onMounted(async () => {
+  if (!auth.token) return
+  realtime.connect()
+  unsubscribeRealtime=realtime.subscribe(showLiveNotice)
+  try { await loadAppearance() } catch { /* keep the locally cached appearance */ }
+  try { unreadNotifications.value=(await http.get('/notifications')).data.filter((item:any)=>!item.is_read).length } catch { unreadNotifications.value=0 }
+  window.addEventListener('memospace-notifications-read',clearUnread)
+})
+onBeforeUnmount(() => { unsubscribeRealtime?.();window.clearTimeout(noticeTimer);window.removeEventListener('memospace-notifications-read',clearUnread);realtime.disconnect() })
 </script>
 
 <template>
@@ -40,9 +71,9 @@ onBeforeUnmount(() => realtime.disconnect())
           <Search :size="17" /><input v-model="search" placeholder="搜索一段记忆…" />
         </form>
         <button class="icon-button realtime-button" :class="{ connected: realtime.connected }" aria-label="好友聊天" @click="router.push('/friends')"><MessageCircle :size="19" /></button>
-        <button class="icon-button" aria-label="通知" @click="router.push('/notifications')"><Bell :size="19" /></button>
+        <button class="icon-button notification-button" aria-label="通知" @click="unreadNotifications=0;router.push('/notifications')"><Bell :size="19" /><span v-if="unreadNotifications" class="notification-badge">{{ unreadNotifications>99?'99+':unreadNotifications }}</span></button>
         <button class="avatar-button" @click="router.push(`/user/${auth.user?.id}`)">
-          <span>{{ auth.user?.nickname?.slice(0, 1) || '拾' }}</span>
+          <UserAvatar :src="auth.user?.avatar" :name="auth.user?.nickname" />
         </button>
       </div>
     </header>
@@ -69,5 +100,6 @@ onBeforeUnmount(() => realtime.disconnect())
     </aside>
 
     <CreateMemoryModal v-if="creating" @close="creating = false" />
+    <button v-if="liveNotice" class="live-notice" role="status" @click="openNotice"><span><Bell :size="18" /></span><div><b>{{ liveNotice.title }}</b><p>{{ liveNotice.content }}</p></div></button>
   </div>
 </template>

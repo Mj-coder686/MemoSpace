@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { ArrowLeft, BellPlus, CheckCheck, MessageCircle, Send, Settings2, Users } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
+import UserAvatar from '../components/UserAvatar.vue'
 import { useAuthStore } from '../stores/auth'
 import { type RealtimeEvent, useRealtimeStore } from '../stores/realtime'
 
@@ -176,7 +177,7 @@ onBeforeUnmount(() => unsubscribe?.())
   <section class="chat-page" aria-label="好友聊天">
     <header class="chat-header">
       <button class="icon-button" aria-label="返回好友中心" @click="router.push('/friends')"><ArrowLeft :size="19" /></button>
-      <span class="friend-avatar">{{ displayName.slice(0, 1) }}</span>
+      <UserAvatar class="friend-avatar" :src="friend?.avatar" :name="displayName" />
       <div class="chat-person">
         <h1>{{ displayName }}</h1>
         <span><i :class="{ online: realtime.isOnline(friendId) }" />{{ realtime.isOnline(friendId) ? '在线' : '离线，消息会保留' }}<template v-if="friend?.public_id"> · Memo ID {{ friend.public_id }}</template></span>

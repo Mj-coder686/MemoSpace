@@ -1,6 +1,7 @@
 package com.memospace.service;
 
 import com.memospace.api.ApiException;
+import com.memospace.realtime.RealtimeNotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,13 @@ import java.util.Map;
 public class RelationshipService {
     private final JdbcTemplate jdbc;
     private final RelationshipCategoryService categories;
+    private final RealtimeNotificationPublisher realtime;
 
-    public RelationshipService(JdbcTemplate jdbc, RelationshipCategoryService categories) {
+    public RelationshipService(JdbcTemplate jdbc, RelationshipCategoryService categories,
+                               RealtimeNotificationPublisher realtime) {
         this.jdbc = jdbc;
         this.categories = categories;
+        this.realtime = realtime;
     }
 
     public List<Map<String, Object>> invitations(long userId) {
@@ -65,6 +69,8 @@ public class RelationshipService {
         jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) " +
                         "VALUES(?,?,'RELATIONSHIP_INVITE','收到关系邀请',?,?)",
                 receiverId, senderId, "邀请你绑定为「" + category.get("name") + "」", invitationId);
+        realtime.publishAfterCommit(receiverId, "RELATIONSHIP_INVITE", "收到关系申请",
+                "邀请你绑定为「" + category.get("name") + "」", invitationId);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", invitationId);
         result.put("status", "PENDING");
@@ -119,6 +125,8 @@ public class RelationshipService {
         jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) " +
                         "VALUES(?,?,'RELATIONSHIP_ACCEPT','关系已建立',?,?)",
                 sender, receiver, "「" + categorySnapshot.get("category_name") + "」分类中的共同空间已准备好", spaceId);
+        realtime.publishAfterCommit(sender, "RELATIONSHIP_ACCEPT", "关系申请已接受",
+                "「" + categorySnapshot.get("category_name") + "」分类中的共同空间已准备好", spaceId);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", "ACCEPTED");
         result.put("relationshipId", relationshipId);

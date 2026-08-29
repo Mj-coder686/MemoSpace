@@ -1,6 +1,7 @@
 package com.memospace.service;
 
 import com.memospace.api.ApiException;
+import com.memospace.realtime.RealtimeNotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,12 @@ public class SocialService {
     private static final Set<String> REACTIONS = Set.of("❤️", "😂", "🥹", "👍", "😭");
     private final JdbcTemplate jdbc;
     private final PermissionService permission;
+    private final RealtimeNotificationPublisher realtime;
 
-    public SocialService(JdbcTemplate jdbc, PermissionService permission) {
+    public SocialService(JdbcTemplate jdbc, PermissionService permission, RealtimeNotificationPublisher realtime) {
         this.jdbc = jdbc;
         this.permission = permission;
+        this.realtime = realtime;
     }
 
     @Transactional
@@ -84,10 +87,57 @@ public class SocialService {
         return Map.of("id", id, "content", content.trim());
     }
 
+    @Transactional
     public Map<String, Object> anniversary(long userId, long spaceId, String title, LocalDate date, boolean yearly) {
-        permission.requireUpload(userId, spaceId);
+        requireActiveRelationshipSpace(userId, spaceId);
         long id = JdbcIds.insert(jdbc, "INSERT INTO anniversary(space_id,creator_id,title,anniversary_date,repeat_yearly) VALUES(?,?,?,?,?)",
                 spaceId, userId, title.trim(), date, yearly);
-        return Map.of("id", id, "title", title.trim(), "date", date);
+        notifySpaceMembers(userId, spaceId, "ANNIVERSARY", "共同空间新增纪念日", title.trim(), id);
+        return anniversaryRow(spaceId, id);
+    }
+
+    @Transactional
+    public Map<String, Object> updateAnniversary(long userId, long spaceId, long anniversaryId,
+                                                  String title, LocalDate date, boolean yearly) {
+        requireActiveRelationshipSpace(userId, spaceId);
+        int changed = jdbc.update("UPDATE anniversary SET title=?,anniversary_date=?,repeat_yearly=? WHERE id=? AND space_id=?",
+                title.trim(), date, yearly, anniversaryId, spaceId);
+        if (changed == 0) throw new ApiException(HttpStatus.NOT_FOUND, "纪念日不存在");
+        notifySpaceMembers(userId, spaceId, "ANNIVERSARY", "共同纪念日已更新", title.trim(), anniversaryId);
+        return anniversaryRow(spaceId, anniversaryId);
+    }
+
+    @Transactional
+    public void deleteAnniversary(long userId, long spaceId, long anniversaryId) {
+        requireActiveRelationshipSpace(userId, spaceId);
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT title FROM anniversary WHERE id=? AND space_id=?", anniversaryId, spaceId);
+        if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "纪念日不存在");
+        String title = String.valueOf(rows.get(0).get("title"));
+        jdbc.update("DELETE FROM anniversary WHERE id=? AND space_id=?", anniversaryId, spaceId);
+        notifySpaceMembers(userId, spaceId, "ANNIVERSARY", "共同纪念日已删除", title, anniversaryId);
+    }
+
+    private Map<String, Object> anniversaryRow(long spaceId, long anniversaryId) {
+        return jdbc.queryForMap("SELECT id,space_id,creator_id,title,anniversary_date,repeat_yearly,created_at " +
+                "FROM anniversary WHERE id=? AND space_id=?", anniversaryId, spaceId);
+    }
+
+    private void requireActiveRelationshipSpace(long userId, long spaceId) {
+        permission.requireUpload(userId, spaceId);
+        int relationshipSpace = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM space WHERE id=? AND space_type='RELATIONSHIP'", Integer.class, spaceId);
+        if (relationshipSpace == 0) throw new ApiException(HttpStatus.BAD_REQUEST, "纪念日只能添加到关系空间");
+    }
+
+    private void notifySpaceMembers(long actorId, long spaceId, String type, String title,
+                                    String content, long referenceId) {
+        jdbc.queryForList("SELECT user_id FROM space_member WHERE space_id=? AND user_id<>?", spaceId, actorId)
+                .forEach(row -> {
+                    long userId = ((Number) row.get("user_id")).longValue();
+                    jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) " +
+                                    "VALUES(?,?,?,?,?,?)", userId, actorId, type, title, content, referenceId);
+                    realtime.publishAfterCommit(userId, type, title, content, referenceId);
+                });
     }
 }

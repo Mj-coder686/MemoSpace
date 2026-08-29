@@ -61,6 +61,11 @@ public class MemoryController {
         return memories.calendar(CurrentUser.id(), year == 0 ? today.getYear() : year, month == 0 ? today.getMonthValue() : month);
     }
 
+    @GetMapping("/calendar/day")
+    public List<Map<String, Object>> calendarDay(@RequestParam LocalDate date) {
+        return memories.calendarDay(CurrentUser.id(), date);
+    }
+
     @GetMapping("/map")
     public List<Map<String, Object>> map() { return memories.map(CurrentUser.id()); }
 

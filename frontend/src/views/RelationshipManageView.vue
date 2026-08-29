@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { Archive, ArrowLeft, ArrowRight, EyeOff, FolderHeart, Save, Tags, UserRoundX } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
+import UserAvatar from '../components/UserAvatar.vue'
 
 const router = useRouter()
 const categories = ref<any[]>([])
@@ -96,7 +97,7 @@ onMounted(load)
     <section v-if="activeRelationships.length" class="relationship-manage-list" aria-label="有效关系">
       <article v-for="relationship in activeRelationships" :key="relationship.id" class="relationship-manage-card">
         <header>
-          <router-link :to="`/user/${relationship.user_id}`" class="manage-avatar">{{ (relationship.nickname || relationship.username)?.slice(0, 1) }}</router-link>
+          <router-link :to="`/user/${relationship.user_id}`"><UserAvatar class="manage-avatar" :src="relationship.avatar" :name="relationship.nickname||relationship.username" /></router-link>
           <div>
             <h2>{{ relationship.nickname }}</h2>
             <p>@{{ relationship.username }} · 建立于 {{ dayjs(relationship.established_at).format('YYYY 年 M 月 D 日') }}</p>

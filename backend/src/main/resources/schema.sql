@@ -172,6 +172,12 @@ CREATE TABLE IF NOT EXISTS space (
     visibility VARCHAR(20) NOT NULL DEFAULT 'PRIVATE',
     cover_url VARCHAR(500),
     theme_id BIGINT,
+    custom_primary_color VARCHAR(20),
+    custom_background_color VARCHAR(20),
+    custom_text_color VARCHAR(20),
+    background_file_id BIGINT,
+    background_brightness INT NOT NULL DEFAULT 100,
+    background_overlay INT NOT NULL DEFAULT 18,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     archived_at TIMESTAMP,
@@ -342,6 +348,17 @@ CREATE TABLE IF NOT EXISTS file_record (
     is_private BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_file_owner FOREIGN KEY (owner_id) REFERENCES user_account(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_appearance (
+    user_id BIGINT PRIMARY KEY,
+    background_color VARCHAR(20) NOT NULL DEFAULT '#f5f2ec',
+    background_file_id BIGINT,
+    background_brightness INT NOT NULL DEFAULT 100,
+    background_overlay INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_appearance_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_appearance_file FOREIGN KEY (background_file_id) REFERENCES file_record(id)
 );
 
 CREATE TABLE IF NOT EXISTS reminder (

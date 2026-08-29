@@ -70,7 +70,7 @@ services:
       DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-true}
       CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-3000}
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "${BACKEND_PORT:-18081}:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s

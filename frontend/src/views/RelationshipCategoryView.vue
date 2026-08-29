@@ -6,6 +6,7 @@ import {
   Home, Leaf, MapPin, Settings2, Sparkles, Star, Users
 } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
+import UserAvatar from '../components/UserAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -91,9 +92,7 @@ onMounted(load)
     <div v-if="people.length" class="category-people-grid">
       <article v-for="person in people" :key="person.relationship_id" class="person-space-card">
         <div class="person-line">
-          <router-link :to="`/user/${person.user_id}`" class="person-avatar" :aria-label="`查看${person.nickname}的主页`">
-            {{ (person.nickname || person.username)?.slice(0, 1) }}
-          </router-link>
+          <router-link :to="`/user/${person.user_id}`" :aria-label="`查看${person.nickname}的主页`"><UserAvatar class="person-avatar" :src="person.avatar" :name="person.nickname||person.username" /></router-link>
           <div class="person-info">
             <router-link :to="`/user/${person.user_id}`"><h3>{{ person.nickname }}</h3></router-link>
             <p>@{{ person.username }}<span v-if="person.location"> · <MapPin :size="12" />{{ person.location }}</span></p>

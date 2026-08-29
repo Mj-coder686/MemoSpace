@@ -2,6 +2,7 @@ package com.memospace.api;
 
 import com.memospace.security.CurrentUser;
 import com.memospace.service.AuthService;
+import com.memospace.service.AppearanceService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -15,8 +16,12 @@ import java.util.Map;
 @RequestMapping("/api")
 public class AuthController {
     private final AuthService auth;
+    private final AppearanceService appearance;
 
-    public AuthController(AuthService auth) { this.auth = auth; }
+    public AuthController(AuthService auth, AppearanceService appearance) {
+        this.auth = auth;
+        this.appearance = appearance;
+    }
 
     @PostMapping("/auth/register")
     public Map<String, Object> register(@Valid @RequestBody RegisterRequest request) {
@@ -37,6 +42,20 @@ public class AuthController {
                 request.gender(), request.birthday(), request.location());
     }
 
+    @PutMapping("/users/me/avatar")
+    public Map<String, Object> avatar(@Valid @RequestBody AvatarRequest request) {
+        return auth.updateAvatar(CurrentUser.id(), request.fileId());
+    }
+
+    @GetMapping("/users/me/appearance")
+    public Map<String, Object> appearance() { return appearance.get(CurrentUser.id()); }
+
+    @PutMapping("/users/me/appearance")
+    public Map<String, Object> appearance(@Valid @RequestBody AppearanceRequest request) {
+        return appearance.update(CurrentUser.id(), request.backgroundColor(), request.backgroundFileId(),
+                request.backgroundBrightness(), request.backgroundOverlay(), request.clearBackgroundImage());
+    }
+
     @PutMapping("/users/me/password")
     public Map<String, String> password(@Valid @RequestBody ChangePasswordRequest request) {
         auth.changePassword(CurrentUser.id(), request.oldPassword(), request.newPassword());
@@ -53,6 +72,12 @@ public class AuthController {
     public record UpdateProfileRequest(@Size(max = 60) String nickname, @Size(max = 300) String bio,
                                        @Size(max = 500) String avatar, String gender, LocalDate birthday,
                                        @Size(max = 120) String location) {}
+
+    public record AvatarRequest(@jakarta.validation.constraints.Positive long fileId) {}
+    public record AppearanceRequest(@Pattern(regexp = "^#[0-9a-fA-F]{6}$") String backgroundColor,
+                                    @jakarta.validation.constraints.Positive Long backgroundFileId,
+                                    Integer backgroundBrightness, Integer backgroundOverlay,
+                                    boolean clearBackgroundImage) {}
 
     public record ChangePasswordRequest(@NotBlank String oldPassword,
                                         @NotBlank @Size(min = 8, max = 72) String newPassword) {}

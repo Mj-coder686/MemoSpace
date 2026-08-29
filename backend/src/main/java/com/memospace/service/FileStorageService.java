@@ -81,7 +81,15 @@ public class FileStorageService {
                             "WHERE r.image_file_id=? AND rp.acceptance_status IN ('PENDING','ACCEPTED')",
                     Integer.class, userId, fileId);
             boolean canViewReminder = reminderLinks != null && reminderLinks > 0;
-            if (!canViewMemory && !canViewReminder) {
+            String contentPath = "/api/files/" + fileId + "/content";
+            Integer avatarLinks = jdbc.queryForObject("SELECT COUNT(*) FROM user_account WHERE avatar=?", Integer.class, contentPath);
+            Integer appearanceLinks = jdbc.queryForObject("SELECT COUNT(*) FROM user_appearance WHERE user_id=? AND background_file_id=?",
+                    Integer.class, userId, fileId);
+            Integer spaceLinks = jdbc.queryForObject("SELECT COUNT(*) FROM space s JOIN space_member sm ON sm.space_id=s.id " +
+                    "WHERE sm.user_id=? AND s.background_file_id=?", Integer.class, userId, fileId);
+            boolean canViewAppearance = (avatarLinks != null && avatarLinks > 0) ||
+                    (appearanceLinks != null && appearanceLinks > 0) || (spaceLinks != null && spaceLinks > 0);
+            if (!canViewMemory && !canViewReminder && !canViewAppearance) {
                 throw new ApiException(HttpStatus.FORBIDDEN, "你没有权限查看该私密文件");
             }
         }

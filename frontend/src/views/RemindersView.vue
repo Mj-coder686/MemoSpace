@@ -182,6 +182,19 @@ onMounted(async () => {
   if (recipient && friends.value.some(item => Number(item.friend_id) === recipient)) {
     openCreate('ASSIGN_FRIEND')
     form.value.friendId = String(recipient)
+    return
+  }
+  const relationship = Number(route.query.relationship)
+  if (relationship && relationships.value.some(item => Number(item.relationship_id || item.id) === relationship)) {
+    openCreate('RELATIONSHIP')
+    form.value.relationshipId = String(relationship)
+    form.value.title = String(route.query.title || '')
+    form.value.reminderKind = String(route.query.kind || 'ANNIVERSARY')
+    form.value.scheduleType = 'YEARLY'
+    const source = dayjs(String(route.query.date || dayjs().format('YYYY-MM-DD')))
+    let next = source.year(dayjs().year()).hour(9).minute(0).second(0)
+    if (next.isBefore(dayjs())) next = next.add(1, 'year')
+    form.value.remindAt = next.format('YYYY-MM-DDTHH:mm')
   }
 })
 </script>

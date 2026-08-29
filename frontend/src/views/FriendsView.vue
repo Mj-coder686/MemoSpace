@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import {
-  BellOff, BellRing, Check, Clock3, Copy, MessageCircle, Search, Settings2,
+  BellOff, BellRing, Check, Clock3, Copy, HeartHandshake, MessageCircle, Search, Settings2,
   ShieldBan, UserMinus, UserPlus, Users, X
 } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import { useAuthStore } from '../stores/auth'
 import { useRealtimeStore } from '../stores/realtime'
+import type { RealtimeEvent } from '../stores/realtime'
+import UserAvatar from '../components/UserAvatar.vue'
 
 type Friend = {
   friendship_id: number
@@ -57,6 +59,11 @@ const requestTab = ref<'INCOMING' | 'OUTGOING'>('INCOMING')
 const editingFriend = ref<Friend | null>(null)
 const settingForm = ref({ remarkName: '', allowDirectReminders: true, muteChat: false })
 const savingSettings = ref(false)
+const categories = ref<any[]>([])
+const relationFriend = ref<Friend|null>(null)
+const relationForm = ref({ categoryId:'', message:'想和你建立一段共同记录的关系。' })
+const relationBusy = ref(false)
+let unsubscribeRealtime:(()=>void)|undefined
 
 const memoId = computed(() => auth.user?.publicId || auth.user?.public_id || '')
 const pendingIncoming = computed(() => requests.value.filter(item => item.direction === 'INCOMING' && item.status === 'PENDING'))
@@ -72,12 +79,14 @@ const requestPerson = (item: FriendRequest) => item.direction === 'INCOMING'
 const load = async () => {
   pageError.value = ''
   try {
-    const [friendResponse, requestResponse] = await Promise.all([
+    const [friendResponse, requestResponse, categoryResponse] = await Promise.all([
       http.get('/friends'),
-      http.get('/friends/requests')
+      http.get('/friends/requests'),
+      http.get('/relationship-categories')
     ])
     friends.value = friendResponse.data
     requests.value = requestResponse.data
+    categories.value = categoryResponse.data
   } catch (error) {
     pageError.value = errorMessage(error)
   } finally {
@@ -149,6 +158,18 @@ const openSettings = (friend: Friend) => {
   }
 }
 
+const openRelationship = (friend:Friend) => {
+  relationFriend.value=friend
+  relationForm.value={categoryId:categories.value.length?String(categories.value[0].id):'',message:'想和你建立一段共同记录的关系。'}
+}
+
+const sendRelationship = async () => {
+  if(!relationFriend.value||!relationForm.value.categoryId)return
+  relationBusy.value=true;pageError.value=''
+  try{const category=categories.value.find(item=>String(item.id)===relationForm.value.categoryId);await http.post('/relationships/invitations',{receiverId:relationFriend.value.friend_id,categoryId:Number(relationForm.value.categoryId),message:relationForm.value.message.trim()});pageMessage.value=`已向 ${displayName(relationFriend.value)} 发出「${category?.name||'关系'}」申请，对方会立即收到通知。`;relationFriend.value=null}
+  catch(error){pageError.value=errorMessage(error)}finally{relationBusy.value=false}
+}
+
 const saveSettings = async () => {
   if (!editingFriend.value) return
   savingSettings.value = true
@@ -193,9 +214,13 @@ const copyMemoId = async () => {
 
 onMounted(async () => {
   realtime.connect()
+  unsubscribeRealtime=realtime.subscribe((event:RealtimeEvent)=>{
+    if(event.type==='NOTIFICATION'&&['FRIEND_REQUEST','FRIEND_ACCEPT'].includes(String(event.notificationType)))load()
+  })
   if (!memoId.value) await auth.loadMe()
   await load()
 })
+onBeforeUnmount(()=>unsubscribeRealtime?.())
 </script>
 
 <template>
@@ -236,7 +261,7 @@ onMounted(async () => {
       </label>
       <div v-if="searchResults.length" class="friend-search-results">
         <article v-for="person in searchResults" :key="person.id">
-          <span class="friend-avatar">{{ (person.nickname || person.username)?.slice(0, 1) }}</span>
+          <UserAvatar class="friend-avatar" :src="person.avatar" :name="person.nickname||person.username" />
           <div><b>{{ person.nickname || person.username }}</b><small>Memo ID {{ person.public_id }}</small></div>
           <button class="button primary" :disabled="requestBusy === Number(person.id)" @click="sendRequest(person)"><UserPlus :size="16" /> 申请好友</button>
         </article>
@@ -254,7 +279,7 @@ onMounted(async () => {
       </div>
       <div v-if="visibleRequests.length" class="request-list">
         <article v-for="item in visibleRequests" :key="item.id">
-          <span class="friend-avatar small">{{ requestPerson(item).nickname?.slice(0, 1) || '友' }}</span>
+          <UserAvatar class="friend-avatar small" :src="requestPerson(item).avatar" :name="requestPerson(item).nickname||'友'" />
           <div class="request-copy">
             <b>{{ requestPerson(item).nickname || '一位用户' }}</b>
             <small>Memo ID {{ requestPerson(item).publicId || '—' }} · {{ formatTime(item.created_at) }}</small>
@@ -279,7 +304,7 @@ onMounted(async () => {
     <div v-if="friends.length" class="friend-grid">
       <article v-for="friend in friends" :key="friend.friend_id" class="friend-card">
         <div class="friend-card-head">
-          <span class="friend-avatar large">{{ displayName(friend).slice(0, 1) }}</span>
+          <UserAvatar class="friend-avatar large" :src="friend.avatar" :name="displayName(friend)" />
           <i :class="{ online: realtime.isOnline(friend.friend_id) }" :title="realtime.isOnline(friend.friend_id) ? '在线' : '离线'" />
           <button class="friend-settings-button" :aria-label="`设置${displayName(friend)}`" @click="openSettings(friend)"><Settings2 :size="17" /></button>
         </div>
@@ -291,7 +316,7 @@ onMounted(async () => {
           <span :class="{ enabled: truthy(friend.allow_direct_reminders) }"><BellRing v-if="truthy(friend.allow_direct_reminders)" :size="13" /><BellOff v-else :size="13" />好友提醒</span>
           <span v-if="truthy(friend.mute_chat)">聊天已静音</span>
         </div>
-        <button class="button primary full-button" @click="router.push(`/chat/${friend.friend_id}`)"><MessageCircle :size="17" /> 开始聊天</button>
+        <div class="friend-card-actions"><button class="button" @click="openRelationship(friend)"><HeartHandshake :size="16" /> 申请关系</button><button class="button primary" @click="router.push(`/chat/${friend.friend_id}`)"><MessageCircle :size="17" /> 聊天</button></div>
       </article>
     </div>
     <div v-else-if="!loading" class="empty-state"><span><Users :size="23" /></span><h3>好友列表还是空的</h3><p>使用上方的 12 位 Memo ID 找到重要的人。</p></div>
@@ -309,4 +334,18 @@ onMounted(async () => {
       </footer>
     </section>
   </div>
+
+  <div v-if="relationFriend" class="modal-backdrop" @click.self="relationFriend=null">
+    <section class="create-modal friend-settings-modal" role="dialog" aria-modal="true" aria-labelledby="relationship-request-title">
+      <header><div><span class="eyebrow">RELATIONSHIP REQUEST</span><h2 id="relationship-request-title">和 {{displayName(relationFriend)}} 建立关系</h2></div><button class="icon-button" aria-label="关闭" @click="relationFriend=null"><X :size="18" /></button></header>
+      <p class="relationship-helper">好友和关系是两层独立连接。对方接受后，你们会拥有唯一的共同空间。</p>
+      <label class="field"><span>关系分类</span><select v-model="relationForm.categoryId"><option value="">请选择</option><option v-for="category in categories" :key="category.id" :value="String(category.id)">{{category.icon}} {{category.name}}</option></select></label>
+      <label class="field"><span>申请留言</span><textarea v-model="relationForm.message" maxlength="200" rows="3"></textarea></label>
+      <footer><button class="button" @click="relationFriend=null">取消</button><button class="button primary" :disabled="relationBusy||!relationForm.categoryId" @click="sendRelationship">{{relationBusy?'正在发送…':'发送关系申请'}}</button></footer>
+    </section>
+  </div>
 </template>
+
+<style scoped>
+.friend-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.friend-card-actions .button{padding:0 10px;display:flex;align-items:center;justify-content:center;gap:5px}.relationship-helper{margin:-4px 0 16px;color:var(--muted);font-size:12px;line-height:1.7}@media(max-width:420px){.friend-card-actions{grid-template-columns:1fr}}
+</style>

@@ -62,6 +62,19 @@ public class SocialController {
         return social.anniversary(CurrentUser.id(), id, request.title(), request.date(), request.repeatYearly());
     }
 
+    @PutMapping("/spaces/{spaceId}/anniversaries/{anniversaryId}")
+    public Map<String, Object> updateAnniversary(@PathVariable long spaceId, @PathVariable long anniversaryId,
+                                                  @Valid @RequestBody AnniversaryRequest request) {
+        return social.updateAnniversary(CurrentUser.id(), spaceId, anniversaryId,
+                request.title(), request.date(), request.repeatYearly());
+    }
+
+    @DeleteMapping("/spaces/{spaceId}/anniversaries/{anniversaryId}")
+    public Map<String, String> deleteAnniversary(@PathVariable long spaceId, @PathVariable long anniversaryId) {
+        social.deleteAnniversary(CurrentUser.id(), spaceId, anniversaryId);
+        return Map.of("message", "纪念日已删除");
+    }
+
     public record TextRequest(@NotBlank @Size(max = 500) String content) {}
     public record ReactionRequest(@NotBlank String reaction) {}
     public record AnniversaryRequest(@NotBlank @Size(max = 100) String title, @NotNull LocalDate date, boolean repeatYearly) {}

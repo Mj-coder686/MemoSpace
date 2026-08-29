@@ -1,6 +1,7 @@
 package com.memospace.service;
 
 import com.memospace.api.ApiException;
+import com.memospace.realtime.RealtimeNotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -17,11 +18,14 @@ public class MemoryService {
     private final JdbcTemplate jdbc;
     private final PermissionService permission;
     private final FeedCacheService feedCache;
+    private final RealtimeNotificationPublisher realtime;
 
-    public MemoryService(JdbcTemplate jdbc, PermissionService permission, FeedCacheService feedCache) {
+    public MemoryService(JdbcTemplate jdbc, PermissionService permission, FeedCacheService feedCache,
+                         RealtimeNotificationPublisher realtime) {
         this.jdbc = jdbc;
         this.permission = permission;
         this.feedCache = feedCache;
+        this.realtime = realtime;
     }
 
     @Transactional
@@ -143,6 +147,12 @@ public class MemoryService {
                 userId, year, month);
     }
 
+    public List<Map<String, Object>> calendarDay(long userId, LocalDate date) {
+        return jdbc.queryForList(summarySelect() +
+                        " WHERE m.creator_id=? AND m.occurred_at>=? AND m.occurred_at<? ORDER BY m.occurred_at DESC",
+                userId, date.atStartOfDay(), date.plusDays(1).atStartOfDay());
+    }
+
     public List<Map<String, Object>> map(long userId) {
         return jdbc.queryForList("SELECT id,title,location,latitude,longitude,occurred_at FROM memory WHERE creator_id=? AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY occurred_at DESC", userId);
     }
@@ -162,8 +172,13 @@ public class MemoryService {
     private void notifySpaceMembers(long creator, long memoryId, Set<Long> spaceIds) {
         for (long spaceId : spaceIds) {
             jdbc.queryForList("SELECT user_id FROM space_member WHERE space_id=? AND user_id<>?", spaceId, creator)
-                    .forEach(row -> jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) VALUES(?,?,'SPACE_MEMORY','共同空间有新回忆','有人留下了一条新记忆',?)",
-                            row.get("user_id"), creator, memoryId));
+                    .forEach(row -> {
+                        long userId = ((Number) row.get("user_id")).longValue();
+                        jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) VALUES(?,?,'SPACE_MEMORY','共同空间有新回忆','有人留下了一条新记忆',?)",
+                                userId, creator, memoryId);
+                        realtime.publishAfterCommit(userId, "SPACE_MEMORY", "共同空间有新回忆",
+                                "有人留下了一条新记忆", memoryId);
+                    });
         }
     }
 
