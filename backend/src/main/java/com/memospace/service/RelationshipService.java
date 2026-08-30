@@ -40,7 +40,7 @@ public class RelationshipService {
         Map<String, Object> category = categories.ownedCategory(senderId, categoryId);
         String relationshipType = relationshipType(String.valueOf(category.get("category_key")));
         if (senderId == receiverId) throw new ApiException(HttpStatus.BAD_REQUEST, "不能向自己发起关系邀请");
-        if (count("SELECT COUNT(*) FROM user_account WHERE id=?", receiverId) == 0) {
+        if (count("SELECT COUNT(*) FROM user_account WHERE id=? AND is_admin=FALSE", receiverId) == 0) {
             throw new ApiException(HttpStatus.NOT_FOUND, "用户不存在");
         }
         if (count("SELECT COUNT(*) FROM user_block WHERE (blocker_id=? AND blocked_id=?) OR (blocker_id=? AND blocked_id=?)",

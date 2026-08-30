@@ -1,3 +1,5 @@
+name: memo-space
+
 services:
   mysql:
     image: mysql:8.4
@@ -68,6 +70,10 @@ services:
       MINIO_BUCKET: ${MINIO_BUCKET:-memospace-private}
       JWT_SECRET: ${JWT_SECRET:-MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
       DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-true}
+      ADMIN_ENABLED: ${ADMIN_ENABLED:-true}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-MemoAdmin2026!}
+      ADMIN_NICKNAME: ${ADMIN_NICKNAME:-拾光管理员}
       CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-3000}
     ports:
       - "${BACKEND_PORT:-18081}:8080"

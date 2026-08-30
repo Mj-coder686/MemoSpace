@@ -20,6 +20,8 @@ const RelationshipManageView = () => import('../views/RelationshipManageView.vue
 const FriendsView = () => import('../views/FriendsView.vue')
 const ChatView = () => import('../views/ChatView.vue')
 const RemindersView = () => import('../views/RemindersView.vue')
+const AdminLoginView = () => import('../views/AdminLoginView.vue')
+const AdminDashboardView = () => import('../views/AdminDashboardView.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,6 +30,8 @@ const router = createRouter({
     { path: '/', redirect: '/home' },
     { path: '/login', component: AuthView, meta: { public: true } },
     { path: '/register', component: AuthView, meta: { public: true } },
+    { path: '/admin/login', component: AdminLoginView, meta: { admin: true, adminPublic: true } },
+    { path: '/admin', component: AdminDashboardView, meta: { admin: true } },
     { path: '/home', component: HomeView },
     { path: '/memories', component: MemoriesView },
     { path: '/memory/:id', component: MemoryDetailView },
@@ -51,6 +55,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  if (to.meta.admin) {
+    const adminToken = localStorage.getItem('memospace_admin_token')
+    if (!to.meta.adminPublic && !adminToken) return '/admin/login'
+    if (to.meta.adminPublic && adminToken) return '/admin'
+    return
+  }
   const token = localStorage.getItem('memospace_token')
   if (!to.meta.public && !token) return '/login'
   if (to.meta.public && token) return '/home'

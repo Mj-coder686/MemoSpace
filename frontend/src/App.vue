@@ -4,10 +4,20 @@ import { useRoute } from 'vue-router'
 import AppShell from './components/AppShell.vue'
 
 const route = useRoute()
-const publicPage = computed(() => Boolean(route.meta.public))
+const standalonePage = computed(() => Boolean(route.meta.public || route.meta.admin))
 </script>
 
 <template>
-  <router-view v-if="publicPage" />
-  <AppShell v-else><router-view /></AppShell>
+  <router-view v-if="standalonePage" v-slot="{ Component }">
+    <Transition name="route-flow" mode="out-in" appear>
+      <component :is="Component" :key="route.fullPath" />
+    </Transition>
+  </router-view>
+  <AppShell v-else>
+    <router-view v-slot="{ Component }">
+      <Transition name="route-flow" mode="out-in">
+        <component :is="Component" :key="route.fullPath" />
+      </Transition>
+    </router-view>
+  </AppShell>
 </template>

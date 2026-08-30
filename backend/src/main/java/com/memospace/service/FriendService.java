@@ -190,7 +190,7 @@ public class FriendService {
     }
 
     private void requireUser(long userId) {
-        if (count("SELECT COUNT(*) FROM user_account WHERE id=?", userId) == 0) {
+        if (count("SELECT COUNT(*) FROM user_account WHERE id=? AND is_admin=FALSE", userId) == 0) {
             throw new ApiException(HttpStatus.NOT_FOUND, "用户不存在");
         }
     }

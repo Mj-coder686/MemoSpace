@@ -27,7 +27,7 @@ public class UserService {
                         "WHEN EXISTS(SELECT 1 FROM friend_request fr WHERE fr.status='PENDING' AND fr.receiver_id=? AND fr.sender_id=u.id) THEN 'INCOMING' " +
                         "ELSE 'NONE' END AS friend_state " +
                         "FROM user_account u LEFT JOIN user_follow f ON f.following_id=u.id AND f.follower_id=? " +
-                        "WHERE u.id<>? AND NOT EXISTS(SELECT 1 FROM user_block b WHERE " +
+                        "WHERE u.id<>? AND u.is_admin=FALSE AND NOT EXISTS(SELECT 1 FROM user_block b WHERE " +
                         "(b.blocker_id=? AND b.blocked_id=u.id) OR (b.blocker_id=u.id AND b.blocked_id=?)) " +
                         "AND (u.public_id=? OR u.public_id LIKE ? OR LOWER(u.nickname) LIKE LOWER(?) OR LOWER(u.username) LIKE LOWER(?)) " +
                         "ORDER BY CASE WHEN u.public_id=? THEN 0 ELSE 1 END,u.nickname LIMIT 30",
@@ -41,7 +41,7 @@ public class UserService {
                 "(SELECT COUNT(*) FROM user_follow WHERE follower_id=u.id) AS following," +
                 "(SELECT COUNT(*) FROM memory WHERE creator_id=u.id AND visibility='PUBLIC') AS public_memories," +
                 "CASE WHEN EXISTS(SELECT 1 FROM user_follow WHERE follower_id=? AND following_id=u.id) THEN TRUE ELSE FALSE END AS is_following " +
-                "FROM user_account u WHERE u.id=?", viewer, userId);
+                "FROM user_account u WHERE u.id=? AND u.is_admin=FALSE", viewer, userId);
         if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "用户不存在");
         return rows.get(0);
     }
@@ -49,7 +49,7 @@ public class UserService {
     @Transactional
     public boolean toggleFollow(long userId, long targetId) {
         if (userId == targetId) throw new ApiException(HttpStatus.BAD_REQUEST, "不能关注自己");
-        if (jdbc.queryForObject("SELECT COUNT(*) FROM user_account WHERE id=?", Integer.class, targetId) == 0) {
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM user_account WHERE id=? AND is_admin=FALSE", Integer.class, targetId) == 0) {
             throw new ApiException(HttpStatus.NOT_FOUND, "用户不存在");
         }
         int exists = jdbc.queryForObject("SELECT COUNT(*) FROM user_follow WHERE follower_id=? AND following_id=?", Integer.class, userId, targetId);
@@ -65,6 +65,9 @@ public class UserService {
     @Transactional
     public boolean toggleBlock(long userId, long targetId) {
         if (userId == targetId) throw new ApiException(HttpStatus.BAD_REQUEST, "不能拉黑自己");
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM user_account WHERE id=? AND is_admin=FALSE", Integer.class, targetId) == 0) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "用户不存在");
+        }
         int exists = jdbc.queryForObject("SELECT COUNT(*) FROM user_block WHERE blocker_id=? AND blocked_id=?", Integer.class, userId, targetId);
         if (exists > 0) {
             jdbc.update("DELETE FROM user_block WHERE blocker_id=? AND blocked_id=?", userId, targetId);

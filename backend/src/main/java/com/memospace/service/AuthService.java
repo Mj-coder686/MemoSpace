@@ -64,6 +64,9 @@ public class AuthService {
         if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "用户名或密码不正确");
         }
+        if (Boolean.TRUE.equals(user.getAdmin())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "管理员账号请从管理员入口登录");
+        }
         return session(user);
     }
 

@@ -14,6 +14,7 @@ import java.util.Date;
 
 @Service
 public class JwtService {
+    public static final String ADMIN_AUTHORITY = "ADMIN_SESSION";
     private final SecretKey key;
     private final Duration expiration;
 
@@ -24,10 +25,19 @@ public class JwtService {
     }
 
     public String issue(Long userId, String username) {
+        return issue(userId, username, "USER");
+    }
+
+    public String issueAdmin(Long userId, String username) {
+        return issue(userId, username, "ADMIN");
+    }
+
+    private String issue(Long userId, String username, String sessionType) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("username", username)
+                .claim("session_type", sessionType)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(expiration)))
                 .signWith(key)
@@ -35,7 +45,16 @@ public class JwtService {
     }
 
     public Long parseUserId(String token) {
-        Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-        return Long.parseLong(claims.getSubject());
+        Session session = parseSession(token);
+        if (session.admin()) throw new IllegalArgumentException("Administrator sessions cannot access user features");
+        return session.userId();
     }
+
+    public Session parseSession(String token) {
+        Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+        String type = claims.get("session_type", String.class);
+        return new Session(Long.parseLong(claims.getSubject()), "ADMIN".equals(type));
+    }
+
+    public record Session(long userId, boolean admin) {}
 }

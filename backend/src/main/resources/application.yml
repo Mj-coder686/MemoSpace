@@ -36,6 +36,11 @@ app:
   cache-enabled: ${REDIS_CACHE_ENABLED:false}
   demo-data:
     enabled: ${DEMO_DATA_ENABLED:true}
+  admin:
+    enabled: ${ADMIN_ENABLED:true}
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:MemoAdmin2026!}
+    nickname: ${ADMIN_NICKNAME:拾光管理员}
   jwt:
     secret: ${JWT_SECRET:MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
     expiration-hours: ${JWT_EXPIRATION_HOURS:168}

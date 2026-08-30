@@ -1,6 +1,7 @@
 package com.memospace.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,6 +23,8 @@ public class UserAccount {
     private String gender;
     private LocalDate birthday;
     private String location;
+    @TableField("is_admin")
+    private Boolean admin;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -45,6 +48,8 @@ public class UserAccount {
     public void setBirthday(LocalDate birthday) { this.birthday = birthday; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public Boolean getAdmin() { return admin; }
+    public void setAdmin(Boolean admin) { this.admin = admin; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

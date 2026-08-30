@@ -1,6 +1,6 @@
 # API 摘要
 
-启动后完整 OpenAPI 文档位于 `/swagger-ui.html`。除注册登录外，请求需带 `Authorization: Bearer <token>`。
+启动后完整 OpenAPI 文档位于 `/swagger-ui.html`。除注册登录外，请求需带 `Authorization: Bearer <token>`。普通用户 Token 与管理员 Token 不能混用。
 
 ## 账号与用户
 
@@ -13,6 +13,21 @@
 | GET | `/api/users/search?q=` | 用户名/昵称搜索 |
 | GET | `/api/users/{id}` | 用户主页 |
 | POST | `/api/users/{id}/follow` | 关注/取消关注 |
+
+## 管理员
+
+管理员使用独立入口 `/admin/login` 和独立 Token。管理员账号不会出现在普通用户搜索、主页、关注、好友或关系邀请中。
+
+| 方法 | 地址 | 说明 |
+|---|---|---|
+| POST | `/api/admin/auth/login` | 管理员登录，仅数据库 `is_admin=true` 的账号可用 |
+| GET | `/api/admin/me` | 当前管理员资料 |
+| GET | `/api/admin/users?keyword=&page=&size=` | 最小化账号目录，不返回用户内容 |
+| PUT | `/api/admin/users/{id}/password` | 重置临时密码并写入审计记录 |
+| PUT | `/api/admin/users/{id}/memo-id` | 修改唯一的 12 位纯数字 Memo ID |
+| GET | `/api/admin/audit` | 最近管理员操作记录 |
+
+管理员 Token 对 `/api/memories/**`、`/api/files/**`、`/api/spaces/**`、聊天、提醒、通知等普通产品接口统一返回 403。
 
 ## 关系与空间
 

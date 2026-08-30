@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Sparkles } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { errorMessage } from '../api/http'
+import LoginModeSwitch from '../components/LoginModeSwitch.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,6 +34,7 @@ const submit = async () => {
     </section>
     <section class="auth-form-wrap">
       <form class="auth-form" @submit.prevent="submit">
+        <LoginModeSwitch v-if="!registering" />
         <span class="eyebrow">{{ registering ? 'CREATE YOUR SPACE' : 'WELCOME BACK' }}</span>
         <h2>{{ registering ? '创建你的记忆空间' : '欢迎回来' }}</h2>
         <p>{{ registering ? '从今天开始，认真收藏生活。' : '继续翻阅那些值得记住的日子。' }}</p>

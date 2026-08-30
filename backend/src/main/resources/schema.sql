@@ -9,8 +9,22 @@ CREATE TABLE IF NOT EXISTS user_account (
     gender VARCHAR(20),
     birthday DATE,
     location VARCHAR(120),
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    admin_id BIGINT NOT NULL,
+    target_user_id BIGINT,
+    action_type VARCHAR(40) NOT NULL,
+    detail VARCHAR(300),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_admin_audit_admin FOREIGN KEY (admin_id) REFERENCES user_account(id),
+    CONSTRAINT fk_admin_audit_target FOREIGN KEY (target_user_id) REFERENCES user_account(id),
+    INDEX idx_admin_audit_created (created_at),
+    INDEX idx_admin_audit_target (target_user_id)
 );
 
 CREATE TABLE IF NOT EXISTS user_follow (

@@ -7,7 +7,7 @@ MemoSpace 不是后台管理系统，也不是把照片塞进文件夹的工具�
 ## 已完成能力
 
 - 注册、登录、JWT、完整资料编辑、头像上传与密码修改
-- 自动分配唯一且不可修改的 12 位纯数字 Memo ID，昵称仍可自由修改
+- 自动分配唯一的 12 位纯数字 Memo ID；普通用户不能自行修改，管理员可在获得本人请求后协助调整
 - Memo ID 精确搜索、好友申请/接受/拒绝、好友备注、删除、拉黑与单人权限设置
 - 好友与关系绑定相互独立：好友负责聊天和日常提醒，关系负责分类与共同空间
 - WebSocket 一对一实时聊天、在线状态、断线重连、消息持久化、已读与历史分页
@@ -26,6 +26,8 @@ MemoSpace 不是后台管理系统，也不是把照片塞进文件夹的工具�
 - 本地/MinIO 双存储；UUID、魔数 MIME 检测、大小限制、路径防穿越，以及鉴权后的媒体流式代理
 - 相册、可展开当天 Memory 的日历、记忆地图、全局搜索、响应式移动导航
 - 8 套低饱和主题，支持账号与关系空间分别自定义颜色、背景图片、亮度和遮罩，并自动分析图片明暗改善文字可读性
+- 独立管理员登录与管理中心，只开放账号检索、临时密码重置、Memo ID 调整和操作审计，不提供 Memory、空间、聊天或媒体浏览入口
+- 用户/管理员登录滑动切换，以及带无障碍降级的轻量页面过渡动画
 - Swagger、MySQL、Redis、MinIO、Nginx 和 Docker Compose
 
 ## 最快启动
@@ -43,6 +45,7 @@ Docker 生产前端使用多阶段构建：Node/npm 只负责执行 Vue 构建�
 打开：
 
 - Web 产品：<http://localhost:3000>
+- 管理员入口：<http://localhost:3000/admin/login>
 - API 文档：<http://localhost:18081/swagger-ui.html>
 - MinIO 控制台：<http://localhost:9001>
 
@@ -56,12 +59,13 @@ Docker 生产前端使用多阶段构建：Node/npm 只负责执行 Vue 构建�
 |---|---|---|
 | 产品演示用户 A | `demo` | `Memo123!` |
 | 产品演示用户 B | `mia` | `Memo123!` |
+| 本地管理员 | `admin` | `MemoAdmin2026!` |
 | MySQL 应用用户 | `memospace` | `memospace_db_2026` |
 | MySQL root | `root` | `root_memospace_2026` |
 | Redis | 无用户名 | `memospace_redis_2026` |
 | MinIO | `memospace_minio` | `memospace_minio_2026` |
 
-还需要替换 `.env` 中的 `JWT_SECRET`。密码更改后执行 `docker compose up -d --build` 使配置生效。若已有 MySQL 数据卷，修改数据库初始化密码不会重写旧用户；开发环境可先备份数据再执行 `docker compose down -v` 重建。
+还需要替换 `.env` 中的 `JWT_SECRET` 和 `ADMIN_PASSWORD`。管理员只在首次启动时创建，后续修改环境变量不会覆盖数据库中的现有密码；可登录管理中心后为管理员账号重置密码。密码更改后执行 `docker compose up -d --build` 使配置生效。若已有 MySQL 数据卷，修改数据库初始化密码不会重写旧用户；开发环境可先备份数据再执行 `docker compose down -v` 重建。
 
 ## 不使用 Docker 的本地开发
 
@@ -117,8 +121,9 @@ flowchart LR
 - 空间写入：必须是空间成员且空间状态为 `ACTIVE`
 - 修改/删除 Memory：仅创建者
 - 私有媒体：拥有者，或对挂载 Memory 具有读取权限的人
+- 管理员会话：只能调用 `/api/admin/**`；不能读取普通用户 API、WebSocket、Memory、空间、聊天、提醒和媒体字节
 
-测试覆盖了他人私密 Memory 访问拦截，以及封存关系空间后的写入拦截。更多说明见 `docs/security.md`。
+测试覆盖了他人私密 Memory 访问拦截、管理员内容边界，以及封存关系空间后的写入拦截。更多说明见 `docs/security.md`。
 
 ## 项目结构
 
@@ -144,7 +149,7 @@ npm ci
 npm run build
 ```
 
-后端 18 项集成测试覆盖关系分类、多标签单空间复用、三种 Memory 媒体权限、Memo ID、好友权限、聊天持久化、提醒周期/投递、重要日期、头像与背景图片权限。三套 Playwright 三账号浏览器流程验证 V1.1 关系媒体、V1.2 好友聊天提醒和 V1.4 关系申请实时送达、资料头像、账号/共同空间个性化及越权拦截。验收记录见 [`docs/v1.4-verification.md`](docs/v1.4-verification.md)。
+后端 21 项集成测试覆盖关系分类、多标签单空间复用、三种 Memory 媒体权限、Memo ID、好友权限、聊天持久化、提醒周期/投递、重要日期、头像与背景图片权限，以及管理员登录、操作审计和内容隔离。三套既有 Playwright 三账号流程验证 V1.1/V1.2/V1.4 主流程，V1.5 只读浏览器流程验证管理员滑动登录、后台操作入口、普通用户越权拦截和管理员内容 API 拦截。最新记录见 [`docs/v1.5-admin-verification.md`](docs/v1.5-admin-verification.md)。
 
 ## 接口文档
 
