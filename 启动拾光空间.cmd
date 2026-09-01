@@ -7,7 +7,6 @@ set "COMPOSE_PROJECT_NAME=memo-space"
 docker info >nul 2>&1
 if not errorlevel 1 goto docker_ready
 
-if exist "D:\Docker\DockerDesktopLocal" set "LOCALAPPDATA=D:\Docker\DockerDesktopLocal"
 echo 正在启动 Docker Desktop，请稍候……
 start "" "%ProgramFiles%\Docker\Docker\Docker Desktop.exe"
 
