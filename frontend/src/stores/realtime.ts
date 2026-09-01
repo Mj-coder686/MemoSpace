@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { websocketUrl } from '../utils/serverConnection'
 
 export type RealtimeEvent = {
   type: string
@@ -25,13 +26,6 @@ export const useRealtimeStore = defineStore('realtime', () => {
   let intentionallyClosed = false
 
   const connected = computed(() => transportConnected.value && authenticated.value)
-
-  const websocketUrl = () => {
-    const configured = import.meta.env.VITE_WS_URL as string | undefined
-    if (configured) return configured
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${location.host}/ws/chat`
-  }
 
   const notify = (event: RealtimeEvent) => {
     lastEvent.value = event
@@ -66,8 +60,13 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const connect = () => {
     const token = localStorage.getItem('memospace_token')
     if (!token || socket.value?.readyState === WebSocket.OPEN || socket.value?.readyState === WebSocket.CONNECTING) return
+    const endpoint = websocketUrl()
+    if (!endpoint) {
+      notify({ type: 'CONNECTION_ERROR', message: '请先在登录页设置服务器地址' })
+      return
+    }
     intentionallyClosed = false
-    const ws = new WebSocket(websocketUrl())
+    const ws = new WebSocket(endpoint)
     socket.value = ws
     ws.onopen = () => {
       transportConnected.value = true

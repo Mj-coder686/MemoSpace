@@ -2,6 +2,7 @@
 setlocal
 chcp 65001 >nul
 cd /d "%~dp0"
+set "COMPOSE_PROJECT_NAME=memo-space"
 
 docker info >nul 2>&1
 if not errorlevel 1 goto docker_ready
@@ -21,7 +22,7 @@ exit /b 1
 
 :docker_ready
 echo 正在启动拾光空间……
-docker compose up -d --build
+docker compose --project-name memo-space up -d --build
 if errorlevel 1 (
   echo 启动失败，请保留此窗口中的提示。
   pause

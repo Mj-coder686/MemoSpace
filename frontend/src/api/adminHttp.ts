@@ -1,8 +1,10 @@
 import axios from 'axios'
+import { apiBaseUrl } from '../utils/serverConnection'
 
-const adminHttp = axios.create({ baseURL: import.meta.env.VITE_API_BASE || '/api', timeout: 15000 })
+const adminHttp = axios.create({ timeout: 15000 })
 
 adminHttp.interceptors.request.use((config) => {
+  config.baseURL = apiBaseUrl()
   const token = localStorage.getItem('memospace_admin_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AlarmClock, Bell, BookHeart, CalendarDays, Compass, Home, Images, MapPin, MessageCircle, Plus, Search, Settings, Sparkles, Users } from 'lucide-vue-next'
+import { AlarmClock, Bell, BookHeart, CalendarDays, Compass, Home, Images, MapPin, Menu, MessageCircle, Plus, Search, Settings, Sparkles, Users, X } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { useRealtimeStore } from '../stores/realtime'
 import type { RealtimeEvent } from '../stores/realtime'
@@ -14,6 +14,7 @@ const auth = useAuthStore()
 const realtime = useRealtimeStore()
 const router = useRouter()
 const creating = ref(false)
+const mobileMore = ref(false)
 const search = ref('')
 const unreadNotifications = ref(0)
 const liveNotice = ref<{ title:string; content:string; path:string } | null>(null)
@@ -83,12 +84,28 @@ onBeforeUnmount(() => { unsubscribeRealtime?.();window.clearTimeout(noticeTimer)
     <button class="create-fab desktop-fab" @click="creating = true"><Plus :size="21" />记录此刻</button>
 
     <nav class="mobile-nav">
-      <router-link to="/home"><Home :size="21" /><span>首页</span></router-link>
-      <router-link to="/explore"><Compass :size="21" /><span>动态</span></router-link>
+      <router-link to="/home" @click="mobileMore=false"><Home :size="21" /><span>首页</span></router-link>
+      <router-link to="/relationships" @click="mobileMore=false"><Users :size="21" /><span>关系</span></router-link>
       <button class="mobile-create" @click="creating = true"><Plus :size="25" /></button>
-      <router-link to="/friends"><Users :size="21" /><span>好友</span></router-link>
-      <router-link :to="`/user/${auth.user?.id}`"><BookHeart :size="21" /><span>我的</span></router-link>
+      <router-link to="/friends" @click="mobileMore=false"><Users :size="21" /><span>好友</span></router-link>
+      <button class="mobile-more-button" aria-label="更多功能" @click="mobileMore=true"><Menu :size="21" /><span>更多</span></button>
     </nav>
+
+    <div v-if="mobileMore" class="mobile-more-backdrop" @click.self="mobileMore=false">
+      <section class="mobile-more-sheet" aria-label="更多功能">
+        <header><div><span class="eyebrow">MEMOSPACE</span><h2>更多功能</h2></div><button class="icon-button" aria-label="关闭" @click="mobileMore=false"><X :size="18" /></button></header>
+        <div class="mobile-more-grid">
+          <router-link :to="`/user/${auth.user?.id}`" @click="mobileMore=false"><BookHeart :size="20" /><span>我的主页</span></router-link>
+          <router-link to="/explore" @click="mobileMore=false"><Compass :size="20" /><span>公开动态</span></router-link>
+          <router-link to="/reminders" @click="mobileMore=false"><AlarmClock :size="20" /><span>重要提醒</span></router-link>
+          <router-link to="/notifications" @click="mobileMore=false"><Bell :size="20" /><span>通知</span></router-link>
+          <router-link to="/photos" @click="mobileMore=false"><Images :size="20" /><span>相册</span></router-link>
+          <router-link to="/calendar" @click="mobileMore=false"><CalendarDays :size="20" /><span>日历</span></router-link>
+          <router-link to="/map" @click="mobileMore=false"><MapPin :size="20" /><span>地图</span></router-link>
+          <router-link to="/settings" @click="mobileMore=false"><Settings :size="20" /><span>设置</span></router-link>
+        </div>
+      </section>
+    </div>
 
     <aside class="quick-dock" aria-label="快捷入口">
       <router-link to="/photos" title="相册"><Images :size="18" /></router-link>

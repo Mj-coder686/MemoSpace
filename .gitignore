@@ -12,4 +12,6 @@ frontend/vite.config.d.ts
 frontend/test-results/
 frontend/playwright-report/
 *.log
+frontend/android/gradle-build.*.log
+release/
 .DS_Store

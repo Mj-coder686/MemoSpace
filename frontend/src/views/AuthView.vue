@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Sparkles } from 'lucide-vue-next'
+import { CheckCircle2, Server, Sparkles, Wifi } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { errorMessage } from '../api/http'
 import LoginModeSwitch from '../components/LoginModeSwitch.vue'
+import { isNativeApp, requiresServerConfiguration, saveServerOrigin, savedServerOrigin } from '../utils/serverConnection'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,8 +14,24 @@ const registering = computed(() => route.path === '/register')
 const form = ref({ username: registering.value ? '' : 'demo', password: registering.value ? '' : 'Memo123!', nickname: '' })
 const busy = ref(false)
 const message = ref('')
+const serverOpen = ref(isNativeApp())
+const serverAddress = ref(savedServerOrigin())
+const serverMessage = ref('')
+
+const saveServer = () => {
+  try {
+    const origin = saveServerOrigin(serverAddress.value)
+    serverAddress.value = origin
+    serverMessage.value = origin ? '已保存。登录后会连接这一套共享数据。' : '请填写电脑或云服务器地址。'
+  } catch (error) { serverMessage.value = error instanceof Error ? error.message : '服务器地址格式不正确' }
+}
 
 const submit = async () => {
+  if (requiresServerConfiguration()) {
+    message.value = '请先填写运行 MemoSpace 的电脑或云服务器地址。'
+    serverOpen.value = true
+    return
+  }
   busy.value = true; message.value = ''
   try {
     if (registering.value) await auth.register(form.value.username, form.value.password, form.value.nickname)
@@ -38,6 +55,16 @@ const submit = async () => {
         <span class="eyebrow">{{ registering ? 'CREATE YOUR SPACE' : 'WELCOME BACK' }}</span>
         <h2>{{ registering ? '创建你的记忆空间' : '欢迎回来' }}</h2>
         <p>{{ registering ? '从今天开始，认真收藏生活。' : '继续翻阅那些值得记住的日子。' }}</p>
+        <section v-if="isNativeApp() || serverOpen" class="server-connection">
+          <button type="button" class="server-connection-toggle" @click="serverOpen=!serverOpen"><span><Wifi :size="16" />共享服务器</span><small>{{ serverAddress || '尚未设置' }}</small></button>
+          <div v-if="serverOpen" class="server-connection-body">
+            <p>首次试用时，填入运行 Docker 的电脑地址，例如 <b>http://192.168.1.8:18081</b>。</p>
+            <label class="field"><span>服务器地址</span><input v-model="serverAddress" inputmode="url" autocomplete="url" placeholder="http://192.168.x.x:18081" /></label>
+            <button type="button" class="button" @click="saveServer"><Server :size="15" />保存连接</button>
+            <small v-if="serverMessage" class="server-message"><CheckCircle2 :size="13" />{{serverMessage}}</small>
+          </div>
+        </section>
+        <button v-else type="button" class="server-inline-link" @click="serverOpen=true"><Server :size="14" />手机 APK 连接服务器设置</button>
         <label v-if="registering" class="field"><span>怎么称呼你</span><input v-model="form.nickname" required maxlength="60" placeholder="你的昵称" /></label>
         <label class="field"><span>用户名</span><input v-model="form.username" required autocomplete="username" placeholder="3-24 位字母、数字或下划线" /></label>
         <label class="field"><span>密码</span><input v-model="form.password" required minlength="8" type="password" autocomplete="current-password" placeholder="至少 8 位" /></label>

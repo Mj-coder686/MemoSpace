@@ -44,7 +44,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
     expiration-hours: ${JWT_EXPIRATION_HOURS:168}
-  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,https://localhost,capacitor://localhost}
   storage:
     mode: ${STORAGE_MODE:local}
     local-path: ${LOCAL_STORAGE_PATH:./data/uploads}

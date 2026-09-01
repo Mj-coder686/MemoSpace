@@ -1,8 +1,10 @@
 import axios from 'axios'
+import { apiBaseUrl } from '../utils/serverConnection'
 
-const http = axios.create({ baseURL: import.meta.env.VITE_API_BASE || '/api', timeout: 15000 })
+const http = axios.create({ timeout: 15000 })
 
 http.interceptors.request.use((config) => {
+  config.baseURL = apiBaseUrl()
   const token = localStorage.getItem('memospace_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
