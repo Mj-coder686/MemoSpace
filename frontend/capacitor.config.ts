@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
     CapacitorHttp: { enabled: true },
     StatusBar: { style: 'DARK', backgroundColor: '#f5f2ec', overlaysWebView: false },
     Keyboard: { resize: 'native' },
-    SplashScreen: { launchAutoHide: false, backgroundColor: '#f5f2ec' },
+    SplashScreen: { launchAutoHide: true, launchShowDuration: 1200, backgroundColor: '#f5f2ec' },
   },
 }
 
