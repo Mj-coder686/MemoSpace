@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { Capacitor } from '@capacitor/core'
 import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import {
@@ -9,6 +10,7 @@ import {
 import http, { errorMessage } from '../api/http'
 import { useAuthStore } from '../stores/auth'
 import PrivateMedia from '../components/PrivateMedia.vue'
+import { chooseNativeImage } from '../utils/nativeImagePicker'
 
 type Reminder = {
   id: number
@@ -45,6 +47,8 @@ const creating = ref(false)
 const saving = ref(false)
 const actionBusy = ref<number | null>(null)
 const imageFile = ref<File | null>(null)
+const nativeApp = Capacitor.isNativePlatform()
+const imagePickerBusy = ref(false)
 const form = ref({
   mode: 'PERSONAL' as FormMode,
   title: '', note: '', reminderKind: 'TASK', scheduleType: 'ONCE',
@@ -110,6 +114,16 @@ const openCreate = (mode: FormMode = 'PERSONAL') => {
 
 const selectImage = (event: Event) => {
   imageFile.value = (event.target as HTMLInputElement).files?.[0] || null
+}
+
+const selectNativeImage = async () => {
+  imagePickerBusy.value = true
+  pageError.value = ''
+  try {
+    const file = await chooseNativeImage('reminder')
+    if (file) imageFile.value = file
+  } catch (error) { pageError.value = errorMessage(error) }
+  finally { imagePickerBusy.value = false }
 }
 
 const uploadImage = async () => {
@@ -268,7 +282,8 @@ onMounted(async () => {
       <label class="field"><span>首次提醒时间</span><input v-model="form.remindAt" type="datetime-local" /></label>
       <label v-if="form.mode==='ABOUT_FRIEND' || form.mode==='ASSIGN_FRIEND'" class="field"><span>{{ form.mode==='ABOUT_FRIEND' ? '这条提醒关于谁' : '把提醒发给谁' }}</span><select v-model="form.friendId"><option value="">请选择好友</option><option v-for="friend in friends" :key="friend.friend_id" :value="String(friend.friend_id)">{{ friend.remark_name || friend.nickname }} · {{ friend.public_id }}</option></select></label>
       <label v-if="form.mode==='RELATIONSHIP'" class="field"><span>选择共同关系</span><select v-model="form.relationshipId"><option value="">请选择关系</option><option v-for="relationship in relationships" :key="relationship.relationship_id || relationship.id" :value="String(relationship.relationship_id || relationship.id)">{{ relationship.other_nickname || relationship.space_name || relationship.relationship_type }}</option></select></label>
-      <label class="reminder-image-picker"><ImagePlus :size="20" /><span><b>{{ imageFile ? imageFile.name : '添加一张提醒图片' }}</b><small>到期时可以从图片想起这件事</small></span><input type="file" accept="image/*" @change="selectImage" /></label>
+      <button v-if="nativeApp" type="button" class="reminder-image-picker" :disabled="imagePickerBusy" @click="selectNativeImage"><ImagePlus :size="20" /><span><b>{{ imagePickerBusy ? '正在打开手机相册…' : imageFile?.name || '从手机相册添加图片' }}</b><small>只读取你主动选择的这一张图片</small></span></button>
+      <label v-else class="reminder-image-picker"><ImagePlus :size="20" /><span><b>{{ imageFile ? imageFile.name : '添加一张提醒图片' }}</b><small>到期时可以从图片想起这件事</small></span><input type="file" accept="image/*" @change="selectImage" /></label>
       <p class="privacy-note">站内提醒会保存在共享数据库中。以后接入 Android 或 iPhone 系统推送时，无需迁移这些数据。</p>
       <footer><button class="button" @click="creating=false">取消</button><button class="button primary" :disabled="saving || !form.title.trim() || !form.remindAt" @click="createReminder">{{ saving ? '正在保存…' : '创建提醒' }}</button></footer>
     </section>

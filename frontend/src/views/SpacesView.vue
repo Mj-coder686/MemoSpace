@@ -1,14 +1,25 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import http from '../api/http'
+import http, { errorMessage } from '../api/http'
 import EmptyState from '../components/EmptyState.vue'
 const spaces = ref<any[]>([])
-onMounted(async () => { spaces.value = (await http.get('/spaces')).data })
+const loading = ref(true)
+const pageError = ref('')
+const load = async () => {
+  loading.value = true
+  pageError.value = ''
+  try { spaces.value = (await http.get('/spaces')).data }
+  catch (error) { pageError.value = errorMessage(error) }
+  finally { loading.value = false }
+}
+onMounted(load)
 </script>
 
 <template>
   <header class="page-heading"><div><span class="eyebrow">PLACES WE BELONG</span><h1>记忆空间</h1><p>自己的安静角落，和重要的人共同写下的故事。</p></div></header>
-  <div v-if="spaces.length" class="space-grid">
+  <div v-if="loading" class="panel route-state">正在载入你的空间…</div>
+  <div v-else-if="pageError" class="panel route-state error-state"><b>空间暂时没有载入</b><p>{{ pageError }}</p><button class="button primary" @click="load">重新载入</button></div>
+  <div v-else-if="spaces.length" class="space-grid">
     <router-link v-for="space in spaces" :key="space.id" :to="`/space/${space.id}`" class="space-card" :class="{archived:space.status==='ARCHIVED'}"
       :style="{'--space-primary':space.primary_color,'--space-background':space.background_color,'--space-text':space.text_color,'--space-muted':space.muted_color}">
       <div><span class="eyebrow">{{ space.status === 'ARCHIVED' ? 'ARCHIVED SPACE' : space.space_type === 'PERSONAL' ? 'JUST FOR ME' : 'BETWEEN US' }}</span><h3>{{ space.name }}</h3><p>{{ space.status === 'ARCHIVED' ? '历史仍在，只是不再增加新内容。' : space.preset_name + ' · 低饱和主题' }}</p></div>
@@ -17,3 +28,7 @@ onMounted(async () => { spaces.value = (await http.get('/spaces')).data })
   </div>
   <EmptyState v-else title="还没有共同空间" text="向重要的人发出邀请，从第一段共同记忆开始。" />
 </template>
+
+<style scoped>
+.route-state{padding:28px;text-align:center}.route-state b{display:block;margin-bottom:7px}.route-state p{margin-bottom:15px;color:var(--muted)}
+</style>

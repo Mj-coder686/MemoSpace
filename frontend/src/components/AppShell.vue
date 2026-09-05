@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { AlarmClock, Bell, BookHeart, CalendarDays, Compass, Home, Images, MapPin, Menu, MessageCircle, Plus, Search, Settings, Sparkles, Users, X } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { useRealtimeStore } from '../stores/realtime'
@@ -13,6 +13,7 @@ import { loadAppearance } from '../utils/appearance'
 const auth = useAuthStore()
 const realtime = useRealtimeStore()
 const router = useRouter()
+const route = useRoute()
 const creating = ref(false)
 const mobileMore = ref(false)
 const search = ref('')
@@ -21,6 +22,12 @@ const liveNotice = ref<{ title:string; content:string; path:string } | null>(nul
 let unsubscribeRealtime: (() => void) | undefined
 let noticeTimer: number | undefined
 const clearUnread = () => { unreadNotifications.value=0 }
+
+const navigate = (path: string) => {
+  mobileMore.value = false
+  liveNotice.value = null
+  void router.push(path)
+}
 
 const runSearch = () => {
   if (search.value.trim()) router.push({ path: '/memories', query: { q: search.value.trim() } })
@@ -40,7 +47,12 @@ const showLiveNotice = (event:RealtimeEvent) => {
   window.clearTimeout(noticeTimer)
   noticeTimer=window.setTimeout(()=>{liveNotice.value=null},6000)
 }
-const openNotice = () => { if(liveNotice.value) router.push(liveNotice.value.path); liveNotice.value=null }
+const openNotice = () => { if(liveNotice.value) navigate(liveNotice.value.path) }
+watch(() => route.fullPath, () => {
+  mobileMore.value = false
+  const active = document.activeElement
+  if (active instanceof HTMLElement) active.blur()
+})
 onMounted(async () => {
   if (!auth.token) return
   realtime.connect()
@@ -71,9 +83,9 @@ onBeforeUnmount(() => { unsubscribeRealtime?.();window.clearTimeout(noticeTimer)
         <form class="search-box" @submit.prevent="runSearch">
           <Search :size="17" /><input v-model="search" placeholder="搜索一段记忆…" />
         </form>
-        <button class="icon-button realtime-button" :class="{ connected: realtime.connected }" aria-label="好友聊天" @click="router.push('/friends')"><MessageCircle :size="19" /></button>
-        <button class="icon-button notification-button" aria-label="通知" @click="unreadNotifications=0;router.push('/notifications')"><Bell :size="19" /><span v-if="unreadNotifications" class="notification-badge">{{ unreadNotifications>99?'99+':unreadNotifications }}</span></button>
-        <button class="avatar-button" @click="router.push(`/user/${auth.user?.id}`)">
+        <button type="button" class="icon-button realtime-button" :class="{ connected: realtime.connected }" aria-label="好友聊天" @click="navigate('/friends')"><MessageCircle :size="19" /></button>
+        <button type="button" class="icon-button notification-button" aria-label="通知" @click="unreadNotifications=0;navigate('/notifications')"><Bell :size="19" /><span v-if="unreadNotifications" class="notification-badge">{{ unreadNotifications>99?'99+':unreadNotifications }}</span></button>
+        <button type="button" class="avatar-button" aria-label="我的主页" @click="navigate(`/user/${auth.user?.id}`)">
           <UserAvatar :src="auth.user?.avatar" :name="auth.user?.nickname" />
         </button>
       </div>
@@ -86,9 +98,9 @@ onBeforeUnmount(() => { unsubscribeRealtime?.();window.clearTimeout(noticeTimer)
     <nav class="mobile-nav">
       <router-link to="/home" @click="mobileMore=false"><Home :size="21" /><span>首页</span></router-link>
       <router-link to="/relationships" @click="mobileMore=false"><Users :size="21" /><span>关系</span></router-link>
-      <button class="mobile-create" @click="creating = true"><Plus :size="25" /></button>
+      <button type="button" class="mobile-create" aria-label="记录此刻" @click="creating = true"><Plus :size="25" /></button>
       <router-link to="/friends" @click="mobileMore=false"><Users :size="21" /><span>好友</span></router-link>
-      <button class="mobile-more-button" aria-label="更多功能" @click="mobileMore=true"><Menu :size="21" /><span>更多</span></button>
+      <button type="button" class="mobile-more-button" aria-label="更多功能" @click="mobileMore=true"><Menu :size="21" /><span>更多</span></button>
     </nav>
 
     <div v-if="mobileMore" class="mobile-more-backdrop" @click.self="mobileMore=false">

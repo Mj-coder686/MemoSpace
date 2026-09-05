@@ -94,23 +94,24 @@ const load = async () => {
   }
 }
 
-const normalizeMemoId = () => {
-  query.value = query.value.replace(/\D/g, '').slice(0, 12)
+const normalizeSearch = () => {
+  query.value = query.value.trimStart().slice(0, 60)
   searchResults.value = []
 }
 
 const searchUsers = async () => {
-  if (query.value.length !== 12) {
-    pageError.value = '请输入完整的 12 位 Memo ID。'
+  const keyword = query.value.trim()
+  if (keyword.length < 2) {
+    pageError.value = '请输入至少 2 位 Memo ID、昵称或用户名。'
     return
   }
   searching.value = true
   pageError.value = ''
   pageMessage.value = ''
   try {
-    const { data } = await http.get('/users/search', { params: { q: query.value } })
+    const { data } = await http.get('/users/search', { params: { q: keyword } })
     searchResults.value = data.filter((person: any) => Number(person.id) !== Number(auth.user?.id))
-    if (!searchResults.value.length) pageMessage.value = '没有找到这个 Memo ID，请确认数字是否完整。'
+    if (!searchResults.value.length) pageMessage.value = `没有找到“${keyword}”，可以换完整 Memo ID、昵称或用户名再试。`
   } catch (error) {
     pageError.value = errorMessage(error)
   } finally {
@@ -247,12 +248,12 @@ onBeforeUnmount(()=>unsubscribeRealtime?.())
 
   <div class="friend-workbench">
     <section class="panel friend-add-panel">
-      <span class="eyebrow">ADD BY MEMO ID</span>
+      <span class="eyebrow">FIND A FRIEND</span>
       <h2>添加好友</h2>
-      <p>输入对方完整的 Memo ID。数字 ID 不会因为昵称改变而变化。</p>
+      <p>支持完整或部分 Memo ID，也可以输入昵称、用户名；数字 ID 不会因为昵称改变而变化。</p>
       <form class="memo-id-search" @submit.prevent="searchUsers">
         <Search :size="18" />
-        <input v-model="query" inputmode="numeric" maxlength="12" aria-label="12 位 Memo ID" placeholder="请输入 12 位 Memo ID" @input="normalizeMemoId" />
+        <input v-model="query" maxlength="60" aria-label="搜索 Memo ID、昵称或用户名" placeholder="Memo ID、昵称或用户名" autocomplete="off" @input="normalizeSearch" />
         <button type="submit" :disabled="searching">{{ searching ? '查找中' : '查找' }}</button>
       </form>
       <label class="field compact-field">
