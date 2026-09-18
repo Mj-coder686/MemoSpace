@@ -69,7 +69,7 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-memospace_minio_2026}
       MINIO_BUCKET: ${MINIO_BUCKET:-memospace-private}
       JWT_SECRET: ${JWT_SECRET:-MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
-      DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-true}
+      DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-false}
       ADMIN_ENABLED: ${ADMIN_ENABLED:-true}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-MemoAdmin2026!}

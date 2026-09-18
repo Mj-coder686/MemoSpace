@@ -224,7 +224,6 @@ h1, h2, .serif { font-family: 'Noto Serif SC', serif; letter-spacing: -.02em; }
 .auth-form h2 { margin-bottom:8px;font-size:32px; }
 .auth-form>p { margin-bottom:30px;color:var(--muted); }
 .auth-form .button { width:100%;margin-top:10px; }
-.demo-note { margin-top:22px;padding:15px 17px;border:1px solid var(--line);border-radius:15px;color:var(--muted);background:var(--surface);font-size:12px;line-height:1.7; }
 
 .timeline { position:relative;padding-left:35px; }
 .timeline::before { content:'';position:absolute;left:9px;top:8px;bottom:12px;width:1px;background:linear-gradient(var(--space-primary,var(--accent)),transparent); }

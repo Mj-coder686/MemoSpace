@@ -49,7 +49,7 @@ Docker 生产前端使用多阶段构建：Node/npm 只负责执行 Vue 构建�
 - API 文档：<http://localhost:18081/swagger-ui.html>
 - MinIO 控制台：<http://localhost:9001>
 
-首次构建需要下载镜像和依赖。MySQL 健康检查通过后，后端会自动生成演示数据。
+首次构建需要下载镜像和依赖。MySQL 健康检查通过后，打开 Web 产品并注册第一个普通用户即可开始使用；默认不会创建演示账号。
 
 ## 默认账号与密码
 
@@ -57,8 +57,6 @@ Docker 生产前端使用多阶段构建：Node/npm 只负责执行 Vue 构建�
 
 | 用途 | 账号 | 默认密码 |
 |---|---|---|
-| 产品演示用户 A | `demo` | `Memo123!` |
-| 产品演示用户 B | `mia` | `Memo123!` |
 | 本地管理员 | `admin` | `MemoAdmin2026!` |
 | MySQL 应用用户 | `memospace` | `memospace_db_2026` |
 | MySQL root | `root` | `root_memospace_2026` |
@@ -84,7 +82,7 @@ npm install
 npm run dev
 ```
 
-浏览器打开 <http://localhost:5173>。本地 H2 数据保存在 `backend/data`，删除该目录可以重置演示数据。
+浏览器打开 <http://localhost:5173>。本地 H2 数据保存在 `backend/data`；默认是空账号库，需要从注册页创建用户。自动化测试可在测试配置中显式开启演示数据。
 
 ## 架构
 

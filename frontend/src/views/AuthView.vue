@@ -11,7 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const registering = computed(() => route.path === '/register')
-const form = ref({ username: registering.value ? '' : 'demo', password: registering.value ? '' : 'Memo123!', nickname: '' })
+const form = ref({ username: '', password: '', nickname: '' })
 const busy = ref(false)
 const message = ref('')
 const serverOpen = ref(isNativeApp())
@@ -70,7 +70,6 @@ const submit = async () => {
         <label class="field"><span>密码</span><input v-model="form.password" required minlength="8" type="password" autocomplete="current-password" placeholder="至少 8 位" /></label>
         <p v-if="message" class="form-error">{{ message }}</p>
         <button class="button primary" :disabled="busy">{{ busy ? '正在打开空间…' : registering ? '开始记录' : '进入拾光空间' }}</button>
-        <div class="demo-note" v-if="!registering">演示账号已填好：<b>demo / Memo123!</b><br />也可以使用 mia / Memo123! 查看另一位成员视角。</div>
         <p style="margin-top:20px;text-align:center;font-size:13px">{{ registering ? '已经有账号？' : '第一次来到这里？' }} <router-link class="text-link" :to="registering ? '/login' : '/register'">{{ registering ? '直接登录' : '创建账号' }}</router-link></p>
       </form>
     </section>
