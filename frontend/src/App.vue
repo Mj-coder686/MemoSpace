@@ -9,7 +9,7 @@ const standalonePage = computed(() => Boolean(route.meta.public || route.meta.ad
 
 <template>
   <router-view v-if="standalonePage" v-slot="{ Component }">
-    <Transition name="route-flow" mode="out-in" appear>
+    <Transition name="route-flow" appear>
       <div :key="route.fullPath" class="route-screen standalone-route-screen">
         <component :is="Component" />
       </div>
@@ -17,7 +17,7 @@ const standalonePage = computed(() => Boolean(route.meta.public || route.meta.ad
   </router-view>
   <AppShell v-else>
     <router-view v-slot="{ Component }">
-      <Transition name="route-flow" mode="out-in">
+      <Transition name="route-flow">
         <div :key="route.fullPath" class="route-screen">
           <component :is="Component" />
         </div>

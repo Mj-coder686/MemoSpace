@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Image, MapPin, Type, Video, X } from 'lucide-vue-next'
+import { Crosshair, Image, MapPin, Type, Video, X } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
+import { coordinateLabel, getCurrentDevicePosition } from '../utils/geolocation'
 
 const emit = defineEmits<{ close: [] }>()
 const router = useRouter()
@@ -10,16 +11,33 @@ const spaces = ref<any[]>([])
 const saving = ref(false)
 const message = ref('')
 const files = ref<File[]>([])
+const locating = ref(false)
+const locationMessage = ref('')
 const form = ref({
   title: '', content: '', memoryType: 'TEXT',
   occurredAt: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
-  location: '', visibility: 'PRIVATE', spaceIds: [] as number[]
+  location: '', latitude: null as number | null, longitude: null as number | null,
+  visibility: 'PRIVATE', spaceIds: [] as number[]
 })
 
 onMounted(async () => {
   const { data } = await http.get('/spaces')
   spaces.value = data.filter((item: any) => item.space_type === 'RELATIONSHIP' && item.status === 'ACTIVE')
 })
+
+const locate = async () => {
+  locating.value = true
+  locationMessage.value = ''
+  try {
+    const position = await getCurrentDevicePosition()
+    form.value.latitude = Number(position.latitude.toFixed(7))
+    form.value.longitude = Number(position.longitude.toFixed(7))
+    if (!form.value.location.trim()) form.value.location = coordinateLabel(position)
+    locationMessage.value = `当前位置已记录，精度约 ${Math.round(position.accuracy)} 米；地点名称可以继续修改。`
+  } catch (error) {
+    locationMessage.value = error instanceof Error ? error.message : '暂时无法获取当前位置'
+  } finally { locating.value = false }
+}
 
 const submit = async () => {
   message.value = ''
@@ -56,7 +74,11 @@ const submit = async () => {
         <label class="field"><span>故事</span><textarea v-model="form.content" rows="5" placeholder="写下当时的光线、声音、心情……"></textarea></label>
         <div class="field-row">
           <label class="field"><span>发生时间</span><input v-model="form.occurredAt" type="datetime-local" /></label>
-          <label class="field"><span>地点</span><input v-model="form.location" placeholder="可选" /></label>
+          <label class="field"><span>地点</span><input v-model="form.location" placeholder="可选，可手动填写地点名称" /></label>
+        </div>
+        <div class="location-capture">
+          <button type="button" class="button" :disabled="locating" @click="locate"><Crosshair :size="15" />{{ locating ? '正在定位…' : '获取当前位置' }}</button>
+          <small>{{ locationMessage || '仅在你主动点击后读取一次位置，不会持续跟踪。' }}</small>
         </div>
         <label v-if="form.memoryType === 'PHOTO' || form.memoryType === 'VIDEO'" class="drop-zone">
           <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" @change="files = Array.from(($event.target as HTMLInputElement).files || [])" />

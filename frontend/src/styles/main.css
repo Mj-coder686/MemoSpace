@@ -191,6 +191,9 @@ h1, h2, .serif { font-family: 'Noto Serif SC', serif; letter-spacing: -.02em; }
 .create-modal>header { display:flex;justify-content:space-between;align-items:start;margin-bottom:22px; }
 .create-modal h2 { margin:0;font-size:27px; }
 .create-modal footer { margin-top:24px;display:flex;justify-content:flex-end;gap:10px; }
+.location-capture { margin:-2px 0 15px;display:flex;align-items:center;gap:12px; }
+.location-capture .button { flex:none;margin:0;display:inline-flex;align-items:center;gap:6px; }
+.location-capture small { color:var(--muted);font-size:10px;line-height:1.5; }
 .memory-types { display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:21px; }
 .memory-types button { padding:13px 8px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--control-line);border-radius:14px;color:var(--muted);background:var(--surface-solid); }
 .memory-types button:hover { color:var(--ink);border-color:color-mix(in srgb,var(--accent) 55%,transparent); }

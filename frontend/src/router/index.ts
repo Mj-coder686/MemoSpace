@@ -54,6 +54,18 @@ const router = createRouter({
   ]
 })
 
+const chunkRecoveryKey = 'memospace_route_chunk_recovery'
+
+router.onError((error, to) => {
+  const message = error instanceof Error ? error.message : String(error)
+  if (!/failed to fetch dynamically imported module|loading chunk|importing a module script failed/i.test(message)) return
+  if (sessionStorage.getItem(chunkRecoveryKey) === to.fullPath) return
+  sessionStorage.setItem(chunkRecoveryKey, to.fullPath)
+  window.location.assign(to.fullPath)
+})
+
+router.afterEach(() => sessionStorage.removeItem(chunkRecoveryKey))
+
 router.beforeEach((to) => {
   if (to.meta.admin) {
     const adminToken = localStorage.getItem('memospace_admin_token')
