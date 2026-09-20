@@ -26,15 +26,18 @@ public class AdminAccountInitializer implements ApplicationRunner {
     private final String username;
     private final String password;
     private final String nickname;
+    private final String accounts;
 
     public AdminAccountInitializer(JdbcTemplate jdbc, AuthService auth,
                                    @Value("${app.admin.enabled}") boolean enabled,
+                                   @Value("${app.admin.accounts:}") String accounts,
                                    @Value("${app.admin.username}") String username,
                                    @Value("${app.admin.password}") String password,
                                    @Value("${app.admin.nickname}") String nickname) {
         this.jdbc = jdbc;
         this.auth = auth;
         this.enabled = enabled;
+        this.accounts = accounts == null ? "" : accounts.trim();
         this.username = username.trim().toLowerCase();
         this.password = password;
         this.nickname = nickname.trim();
@@ -44,22 +47,43 @@ public class AdminAccountInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         if (!enabled) return;
+        List<AdminSeed> seeds = configuredAccounts();
+        if (seeds.isEmpty()) seeds = List.of(new AdminSeed(username, password, nickname));
+        for (AdminSeed seed : seeds) create(seed);
+    }
+
+    private void create(AdminSeed seed) {
         List<Map<String, Object>> existing = jdbc.queryForList(
-                "SELECT id,is_admin FROM user_account WHERE username=?", username);
+                "SELECT id,is_admin FROM user_account WHERE username=?", seed.username());
         if (!existing.isEmpty()) {
             Object rawFlag = existing.get(0).get("is_admin");
             boolean administrator = Boolean.TRUE.equals(rawFlag)
                     || (rawFlag instanceof Number && ((Number) rawFlag).intValue() != 0);
             if (!administrator) {
-                log.warn("Configured administrator username '{}' is already used by a normal account; administrator was not enabled", username);
+                log.warn("Configured administrator username '{}' is already used by a normal account; administrator was not enabled", seed.username());
             }
             return;
         }
-        if (password.length() < 8 || password.length() > 72) {
-            throw new IllegalStateException("ADMIN_PASSWORD must contain 8-72 characters");
+        if (seed.password().length() < 8 || seed.password().length() > 72) {
+            throw new IllegalStateException("Every configured administrator password must contain 8-72 characters");
         }
-        auth.register(username, password, nickname);
-        jdbc.update("UPDATE user_account SET is_admin=TRUE WHERE username=?", username);
-        log.info("Local administrator account '{}' created", username);
+        auth.register(seed.username(), seed.password(), seed.nickname());
+        jdbc.update("UPDATE user_account SET is_admin=TRUE WHERE username=?", seed.username());
+        log.info("Local administrator account '{}' created", seed.username());
     }
+
+    private List<AdminSeed> configuredAccounts() {
+        if (accounts.isBlank()) return List.of();
+        return java.util.Arrays.stream(accounts.split(";"))
+                .map(String::trim).filter(value -> !value.isBlank())
+                .map(value -> {
+                    String[] parts = value.split("\\|", -1);
+                    if (parts.length != 3 || parts[0].isBlank() || parts[2].isBlank()) {
+                        throw new IllegalStateException("ADMIN_ACCOUNTS entries must use username|password|nickname");
+                    }
+                    return new AdminSeed(parts[0].trim().toLowerCase(), parts[1], parts[2].trim());
+                }).toList();
+    }
+
+    private record AdminSeed(String username, String password, String nickname) {}
 }

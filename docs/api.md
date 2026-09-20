@@ -25,6 +25,11 @@
 | GET | `/api/admin/users?keyword=&page=&size=` | 最小化账号目录，不返回用户内容 |
 | PUT | `/api/admin/users/{id}/password` | 重置临时密码并写入审计记录 |
 | PUT | `/api/admin/users/{id}/memo-id` | 修改唯一的 12 位纯数字 Memo ID |
+| PUT | `/api/admin/users/{id}/status` | 禁言 7 天、封号或解除限制 |
+| GET | `/api/admin/reports?status=&page=&size=` | 举报列表与被举报账号违规次数 |
+| GET | `/api/admin/reports/{id}` | 读取这条举报的目标证据，不扩展到用户其他内容 |
+| PUT | `/api/admin/reports/{id}/resolve` | 驳回或确认违规，并可删除目标、警告、禁言或封号 |
+| GET | `/api/admin/reports/{reportId}/media/{fileId}` | 读取与被举报 Memory 直接绑定的证据媒体 |
 | GET | `/api/admin/audit` | 最近管理员操作记录 |
 
 管理员 Token 对 `/api/memories/**`、`/api/files/**`、`/api/spaces/**`、聊天、提醒、通知等普通产品接口统一返回 403。
@@ -64,6 +69,8 @@
 | POST | `/api/memories/{id}/comments` | 评论 |
 | POST | `/api/memories/{id}/reactions` | 关系回应 |
 | POST | `/api/memories/{id}/favorite` | 收藏公开动态 |
+| POST | `/api/reports` | 举报当前用户有权查看的他人 Memory 或评论 |
+| GET | `/api/reports/mine` | 我的举报及处理状态 |
 
 创建 Memory 示例：
 
@@ -79,6 +86,17 @@
   "visibility": "RELATIONSHIP",
   "spaceIds": [2],
   "fileIds": [8, 9]
+}
+```
+
+举报示例：
+
+```json
+{
+  "targetType": "MEMORY",
+  "targetId": 9,
+  "reasonCategory": "ILLEGAL",
+  "description": "补充说明，最多 500 字"
 }
 ```
 

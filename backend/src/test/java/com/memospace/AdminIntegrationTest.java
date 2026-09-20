@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
+        "app.admin.accounts=system_admin_test|AdminTest2026!|测试管理员;system_admin_two|AdminTwo2026!|第二管理员;system_admin_three|AdminThree2026!|第三管理员",
         "app.admin.username=system_admin_test",
         "app.admin.password=AdminTest2026!",
         "app.admin.nickname=测试管理员"
@@ -30,6 +31,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
+
+    @Test
+    void createsEveryConfiguredAdministratorWithIndependentLogin() throws Exception {
+        postJson("/api/admin/auth/login", Map.of("username", "system_admin_test", "password", "AdminTest2026!"), null, 200);
+        postJson("/api/admin/auth/login", Map.of("username", "system_admin_two", "password", "AdminTwo2026!"), null, 200);
+        postJson("/api/admin/auth/login", Map.of("username", "system_admin_three", "password", "AdminThree2026!"), null, 200);
+        postJson("/api/auth/login", Map.of("username", "system_admin_two", "password", "AdminTwo2026!"), null, 403);
+    }
 
     @Test
     void normalUsersCannotEnterAdministratorApiAndAdminCannotUseNormalLogin() throws Exception {

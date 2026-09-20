@@ -16,7 +16,7 @@ import java.util.Set;
 
 /**
  * Compatibility migration for installations created before public_id existed.
- * schema.sql remains the source of truth for clean installations; this runner only upgrades old volumes.
+ * Flyway migrations remain the source of truth for clean installations; this runner only upgrades legacy volumes.
  */
 @Component
 @Order(0)

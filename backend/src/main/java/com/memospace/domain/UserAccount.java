@@ -25,6 +25,9 @@ public class UserAccount {
     private String location;
     @TableField("is_admin")
     private Boolean admin;
+    private String accountStatus;
+    private LocalDateTime mutedUntil;
+    private Integer violationCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -50,6 +53,12 @@ public class UserAccount {
     public void setLocation(String location) { this.location = location; }
     public Boolean getAdmin() { return admin; }
     public void setAdmin(Boolean admin) { this.admin = admin; }
+    public String getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(String accountStatus) { this.accountStatus = accountStatus; }
+    public LocalDateTime getMutedUntil() { return mutedUntil; }
+    public void setMutedUntil(LocalDateTime mutedUntil) { this.mutedUntil = mutedUntil; }
+    public Integer getViolationCount() { return violationCount; }
+    public void setViolationCount(Integer violationCount) { this.violationCount = violationCount; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

@@ -24,15 +24,17 @@ public class AuthService {
     private final JwtService jwtService;
     private final RelationshipCategoryService categories;
     private final PublicIdService publicIds;
+    private final ModerationService moderation;
 
     public AuthService(UserMapper users, JdbcTemplate jdbc, PasswordEncoder passwordEncoder, JwtService jwtService,
-                       RelationshipCategoryService categories, PublicIdService publicIds) {
+                       RelationshipCategoryService categories, PublicIdService publicIds, ModerationService moderation) {
         this.users = users;
         this.jdbc = jdbc;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.categories = categories;
         this.publicIds = publicIds;
+        this.moderation = moderation;
     }
 
     @Transactional
@@ -67,6 +69,7 @@ public class AuthService {
         if (Boolean.TRUE.equals(user.getAdmin())) {
             throw new ApiException(HttpStatus.FORBIDDEN, "管理员账号请从管理员入口登录");
         }
+        moderation.requireCanLogin(user.getId());
         return session(user);
     }
 

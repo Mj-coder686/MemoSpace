@@ -18,13 +18,16 @@ import java.util.List;
 @Service
 public class ChatService {
     private final JdbcTemplate jdbc;
+    private final ModerationService moderation;
 
-    public ChatService(JdbcTemplate jdbc) {
+    public ChatService(JdbcTemplate jdbc, ModerationService moderation) {
         this.jdbc = jdbc;
+        this.moderation = moderation;
     }
 
     @Transactional
     public synchronized SendResult send(long senderId, long friendId, String clientMessageId, String content) {
+        moderation.requireCanPublish(senderId);
         String cleanClientId = requireText(clientMessageId, "clientMessageId 不能为空");
         String cleanContent = requireText(content, "消息内容不能为空");
         if (cleanClientId.length() > 80) {

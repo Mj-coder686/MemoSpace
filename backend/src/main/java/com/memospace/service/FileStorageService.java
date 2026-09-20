@@ -113,6 +113,15 @@ public class FileStorageService {
         }
     }
 
+    public StoredFile loadReportEvidence(long reportId, long fileId) {
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT fr.owner_id FROM content_report r " +
+                "JOIN memory_media mm ON r.target_type='MEMORY' AND mm.memory_id=r.target_id " +
+                "JOIN file_record fr ON fr.object_key=mm.object_key WHERE r.id=? AND fr.id=?", reportId, fileId);
+        if (rows.isEmpty()) throw new ApiException(HttpStatus.FORBIDDEN, "该文件不属于这条举报证据");
+        long ownerId = ((Number) rows.get(0).get("owner_id")).longValue();
+        return load(ownerId, fileId);
+    }
+
     private void putLocal(String key, byte[] bytes) throws Exception {
         Path target = safeLocalPath(key);
         Files.createDirectories(target.getParent());

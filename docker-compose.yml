@@ -13,7 +13,6 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 8s
@@ -69,8 +68,10 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-memospace_minio_2026}
       MINIO_BUCKET: ${MINIO_BUCKET:-memospace-private}
       JWT_SECRET: ${JWT_SECRET:-MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
+      FLYWAY_BASELINE_ON_MIGRATE: ${FLYWAY_BASELINE_ON_MIGRATE:-true}
       DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-false}
       ADMIN_ENABLED: ${ADMIN_ENABLED:-true}
+      ADMIN_ACCOUNTS: ${ADMIN_ACCOUNTS:-}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-MemoAdmin2026!}
       ADMIN_NICKNAME: ${ADMIN_NICKNAME:-拾光管理员}

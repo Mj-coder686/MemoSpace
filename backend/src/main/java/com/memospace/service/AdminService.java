@@ -65,7 +65,7 @@ public class AdminService {
                 ? jdbc.queryForObject("SELECT COUNT(*) FROM user_account", Long.class)
                 : jdbc.queryForObject("SELECT COUNT(*) FROM user_account" + where, Long.class, searchArgs);
 
-        String select = "SELECT id,public_id,username,nickname,is_admin,created_at FROM user_account" +
+        String select = "SELECT id,public_id,username,nickname,is_admin,account_status,muted_until,violation_count,created_at FROM user_account" +
                 where + " ORDER BY is_admin DESC,id DESC LIMIT ? OFFSET ?";
         Object[] queryArgs = new Object[searchArgs.length + 2];
         System.arraycopy(searchArgs, 0, queryArgs, 0, searchArgs.length);
@@ -122,7 +122,7 @@ public class AdminService {
     }
 
     private Map<String, Object> userRow(long userId) {
-        return jdbc.queryForMap("SELECT id,public_id,username,nickname,is_admin,created_at FROM user_account WHERE id=?", userId);
+        return jdbc.queryForMap("SELECT id,public_id,username,nickname,is_admin,account_status,muted_until,violation_count,created_at FROM user_account WHERE id=?", userId);
     }
 
     private Map<String, Object> adminProfile(UserAccount user) {

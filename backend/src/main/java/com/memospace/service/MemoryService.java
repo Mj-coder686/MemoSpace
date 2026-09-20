@@ -19,17 +19,20 @@ public class MemoryService {
     private final PermissionService permission;
     private final FeedCacheService feedCache;
     private final RealtimeNotificationPublisher realtime;
+    private final ModerationService moderation;
 
     public MemoryService(JdbcTemplate jdbc, PermissionService permission, FeedCacheService feedCache,
-                         RealtimeNotificationPublisher realtime) {
+                         RealtimeNotificationPublisher realtime, ModerationService moderation) {
         this.jdbc = jdbc;
         this.permission = permission;
         this.feedCache = feedCache;
         this.realtime = realtime;
+        this.moderation = moderation;
     }
 
     @Transactional
     public Map<String, Object> create(long userId, CreateCommand command) {
+        moderation.requireCanPublish(userId);
         String type = command.type().toUpperCase();
         String visibility = command.visibility().toUpperCase();
         if (!TYPES.contains(type)) throw new ApiException(HttpStatus.BAD_REQUEST, "不支持的记忆类型");
@@ -91,6 +94,7 @@ public class MemoryService {
 
     @Transactional
     public Map<String, Object> update(long userId, long memoryId, String title, String content, String visibility) {
+        moderation.requireCanPublish(userId);
         permission.requireEdit(userId, memoryId);
         String v = visibility == null ? null : visibility.toUpperCase();
         if (v != null && !VISIBILITIES.contains(v)) throw new ApiException(HttpStatus.BAD_REQUEST, "不支持的可见性");

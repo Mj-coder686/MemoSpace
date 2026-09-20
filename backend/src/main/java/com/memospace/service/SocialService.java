@@ -18,15 +18,19 @@ public class SocialService {
     private final JdbcTemplate jdbc;
     private final PermissionService permission;
     private final RealtimeNotificationPublisher realtime;
+    private final ModerationService moderation;
 
-    public SocialService(JdbcTemplate jdbc, PermissionService permission, RealtimeNotificationPublisher realtime) {
+    public SocialService(JdbcTemplate jdbc, PermissionService permission, RealtimeNotificationPublisher realtime,
+                         ModerationService moderation) {
         this.jdbc = jdbc;
         this.permission = permission;
         this.realtime = realtime;
+        this.moderation = moderation;
     }
 
     @Transactional
     public Map<String, Object> comment(long userId, long memoryId, String content) {
+        moderation.requireCanPublish(userId);
         permission.requireView(userId, memoryId);
         Map<String, Object> memory = jdbc.queryForMap("SELECT creator_id,visibility FROM memory WHERE id=?", memoryId);
         String visibility = String.valueOf(memory.get("visibility"));
@@ -82,6 +86,7 @@ public class SocialService {
     }
 
     public Map<String, Object> leaveMessage(long userId, long spaceId, String content) {
+        moderation.requireCanPublish(userId);
         permission.requireUpload(userId, spaceId);
         long id = JdbcIds.insert(jdbc, "INSERT INTO space_message(space_id,user_id,content) VALUES(?,?,?)", spaceId, userId, content.trim());
         return Map.of("id", id, "content", content.trim());
