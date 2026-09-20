@@ -25,9 +25,12 @@ MemoSpace 不是后台管理系统，也不是把照片塞进文件夹的工具�
 - 评论、Reaction、收藏与通知
 - 本地/MinIO 双存储；UUID、魔数 MIME 检测、大小限制、路径防穿越，以及鉴权后的媒体流式代理
 - 相册、可展开当天 Memory 的日历、记忆地图、全局搜索、响应式移动导航
+- Web 与 Android 在用户主动授权后读取一次当前坐标，可写入地点 Memory，并在记忆地图标出当前位置
 - 8 套低饱和主题，支持账号与关系空间分别自定义颜色、背景图片、亮度和遮罩，并自动分析图片明暗改善文字可读性
-- 独立管理员登录与管理中心，只开放账号检索、临时密码重置、Memo ID 调整和操作审计，不提供 Memory、空间、聊天或媒体浏览入口
+- Memory/评论举报、证据快照与处理进度；管理员可删除被举报内容、警告、禁言 7 天、封号或解除限制
+- 独立管理员登录与管理中心，只开放账号管理、举报目标证据和操作审计；不能浏览未被举报的 Memory、空间、聊天或媒体
 - 用户/管理员登录滑动切换，以及带无障碍降级的轻量页面过渡动画
+- Flyway 版本化数据库迁移；已有 MySQL 卷首次升级会建立迁移历史并保留原数据
 - Swagger、MySQL、Redis、MinIO、Nginx 和 Docker Compose
 
 ## 最快启动
@@ -63,7 +66,9 @@ Docker 生产前端使用多阶段构建：Node/npm 只负责执行 Vue 构建�
 | Redis | 无用户名 | `memospace_redis_2026` |
 | MinIO | `memospace_minio` | `memospace_minio_2026` |
 
-还需要替换 `.env` 中的 `JWT_SECRET` 和 `ADMIN_PASSWORD`。管理员只在首次启动时创建，后续修改环境变量不会覆盖数据库中的现有密码；可登录管理中心后为管理员账号重置密码。密码更改后执行 `docker compose up -d --build` 使配置生效。若已有 MySQL 数据卷，修改数据库初始化密码不会重写旧用户；开发环境可先备份数据再执行 `docker compose down -v` 重建。
+还需要替换 `.env` 中的 `JWT_SECRET` 和管理员密码。需要多个管理员时设置 `ADMIN_ACCOUNTS=账号|密码|昵称;账号|密码|昵称`；一旦填写，就不会再创建表格中的单个兼容账号。管理员只在账号不存在时创建，后续修改环境变量不会覆盖数据库中的现有密码。密码更改后执行 `docker compose up -d --build` 使配置生效。若已有 MySQL 数据卷，修改数据库初始化密码不会重写旧用户；不要为了升级功能删除数据卷。
+
+数据库结构由 `backend/src/main/resources/db/migration` 中的 Flyway 脚本管理。旧部署第一次升级前先备份 MySQL；启动后会把原结构标记为 V1，再执行 V2 及更高版本，无需重新建库。详情见 `sql/README.md`。
 
 ## 不使用 Docker 的本地开发
 
@@ -106,7 +111,7 @@ flowchart LR
 
 `memory` 保存唯一的记忆主体，`memory_space` 决定同一条 Memory 出现在哪些空间，避免同步时复制内容。`space_member` 是空间访问权的事实来源。公开展示由独立 `post` 记录控制，使“私人历史”与“公开发布状态”可以分别演化。
 
-核心表：`user_account`、`friend_request`、`friendship`、`friend_setting`、`direct_message`、`reminder`、`reminder_participant`、`reminder_delivery`、`user_follow`、`relationship_invitation`、`relationships`、`relationship_category`、`relationship_category_link`、`space`、`space_member`、`memory`、`memory_space`、`memory_media`、`notification`、`file_record`。
+核心表：`user_account`、`friend_request`、`friendship`、`friend_setting`、`direct_message`、`reminder`、`reminder_participant`、`reminder_delivery`、`user_follow`、`relationship_invitation`、`relationships`、`relationship_category`、`relationship_category_link`、`space`、`space_member`、`memory`、`memory_space`、`memory_media`、`notification`、`file_record`、`content_report`、`admin_audit_log`。
 
 ## 权限设计
 
@@ -119,7 +124,8 @@ flowchart LR
 - 空间写入：必须是空间成员且空间状态为 `ACTIVE`
 - 修改/删除 Memory：仅创建者
 - 私有媒体：拥有者，或对挂载 Memory 具有读取权限的人
-- 管理员会话：只能调用 `/api/admin/**`；不能读取普通用户 API、WebSocket、Memory、空间、聊天、提醒和媒体字节
+- 管理员会话：只能调用 `/api/admin/**`；只能读取用户主动举报的目标文本和与该目标 Memory 绑定的证据媒体，不能浏览其他内容
+- 被封号账号不能登录，已签发会话也会被拦截；禁言期间可浏览，但不能发布 Memory、评论、关系空间留言或聊天消息
 
 测试覆盖了他人私密 Memory 访问拦截、管理员内容边界，以及封存关系空间后的写入拦截。更多说明见 `docs/security.md`。
 
@@ -147,7 +153,7 @@ npm ci
 npm run build
 ```
 
-后端 21 项集成测试覆盖关系分类、多标签单空间复用、三种 Memory 媒体权限、Memo ID、好友权限、聊天持久化、提醒周期/投递、重要日期、头像与背景图片权限，以及管理员登录、操作审计和内容隔离。三套既有 Playwright 三账号流程验证 V1.1/V1.2/V1.4 主流程，V1.5 只读浏览器流程验证管理员滑动登录、后台操作入口、普通用户越权拦截和管理员内容 API 拦截。最新记录见 [`docs/v1.5-admin-verification.md`](docs/v1.5-admin-verification.md)。
+后端 24 项测试覆盖关系分类、多标签单空间复用、三种 Memory 媒体权限、Memo ID、好友权限、聊天持久化、提醒周期/投递、重要日期、管理员隔离、举报处罚，以及“已有数据库保留数据并由 V1 升到 V2”。浏览器自动化还覆盖手机连续导航、好友搜索、当前定位和举报提交；Android 工程会在同步后构建可安装测试 APK。
 
 ## 接口文档
 

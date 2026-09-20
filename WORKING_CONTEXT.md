@@ -1,45 +1,48 @@
-# MemoSpace V1.2 working context
+# MemoSpace V1.6 working context
 
-## Current V1.2 goal
+## Current goal
 
-- Execute Web-only iteration items 1–4: immutable 12-digit numeric Memo ID, friend requests/settings, durable one-to-one WebSocket chat, and image/recurring reminders.
-- Defer Web Push, Android APK, and iPhone clients.
-- Keep `user_account.id` internal; expose `public_id` as the searchable Memo ID.
-- Keep friendship separate from Relationship categories/spaces. Only accepted friends can chat.
-- Friend-assigned reminders default to direct delivery for this private deployment, but each recipient can disable direct reminders per friend; disabled delivery becomes pending acceptance.
-- Small-server architecture: one Spring Boot instance, MySQL persistence, Redis only where useful, MinIO images, in-process scheduler with database deduplication.
-- Execution checklist: `docs/web-social-iteration-checklist.md`.
+- Keep the small-server architecture: Vue/Nginx + one Spring Boot service + MySQL + Redis + private MinIO.
+- Use Flyway for every database change. `V1__baseline.sql` is immutable; add V2/V3 migrations rather than editing deployed migrations.
+- Preserve the existing MySQL volume: first upgraded startup baselines a non-empty legacy schema at V1, then applies V2.
+- Support user reports for Memory/comments and flexible manual moderation while preserving the rule that administrators cannot browse unrelated private data.
+- Support one-shot current-location capture on Web and Android after explicit user action.
+- Prevent post-deployment stale chunks from leaving navigation blank: revalidate `index.html`, cache hashed assets, and perform one guarded chunk-recovery reload.
 
-## Scope and acceptance
+## V1.6 acceptance
 
-- Fix actual Memory media delivery for `PUBLIC`, `PRIVATE`, and `RELATIONSHIP`; validate authorized visibility and unauthorized denial across DB, MinIO, signed URL, browser requests, and HTTP responses.
-- Add owner-specific relationship categories (four defaults, custom, hide/restore, reorder) without deleting relationships, spaces, or memories.
-- One active relationship between a pair owns one shared space; multiple category labels must reuse it.
-- Complete search/invite/accept/reject/manage/unbind flow and improve low-contrast visual hierarchy.
-- Finish only after Docker deployment and browser-level two-or-more-account verification.
+- A user can report visible content they do not own; duplicate/self/inaccessible reports are blocked.
+- Admin sees only report evidence, reporter/reported account metadata, violation count, and audit history.
+- Admin can dismiss, remove the exact target, warn, mute for seven days, ban, or restore an account.
+- Banned users cannot log in or keep using old REST sessions. Muted users may read but cannot publish Memory/comments/space messages/chat.
+- Existing data survives V1→V2 Flyway migration.
+- Web build, Android sync/APK build, backend suite, and browser navigation/location/report tests pass.
 
-## Decisions already implemented
+## Decisions implemented
 
-- New normalized tables: `relationship_category`, `relationship_category_link`, and `relationship_invitation_category`.
-- Categories are user-owned labels; category links are independent from `relationships` and `space`, so hiding a label changes only `is_visible`.
-- Invitation acceptance finds an existing active relationship before creating one and always reuses its relationship space.
-- Docker profile runs the idempotent schema on startup so an existing MySQL volume receives V1.1 tables.
-- Legacy invitation requests with `relationshipType` remain supported by mapping to a default category.
+- `content_report` keeps an immutable text snapshot so deleting the target does not erase the audit trail.
+- Report media access requires both report ID and file ID and verifies that the file belongs to the reported Memory.
+- Moderation remains manual and flexible; each confirmed report increments `violation_count` and sends an official in-app notice.
+- Three administrators are configured in the ignored local `.env`; public examples do not contain their secrets.
+- Current location is not collected in the background. It is requested only from the map or Memory editor.
 
-## Verification state
+## Verification state (2026-09-20)
 
-- Backend integration suite: 14 tests pass with zero failures, covering V1.1 media/relationship behavior plus Memo ID, friendship, WebSocket chat, reminder authorization and recurrence.
-- Frontend production build passes (1751 modules). Docker images build successfully and MySQL, Redis, MinIO, backend and Nginx frontend all run through Compose.
-- Both Playwright journeys pass together after a full container restart: V1.1 relationship/media permission regression and V1.2 three-account friend/chat/reminder acceptance.
-- V1.2 browser evidence includes unique 12-digit IDs, friend consent, live WebSocket delivery, persisted history, non-friend 403, real reminder-image decoding, outsider 403, reminder acceptance and scheduler notification delivery.
-- Restart comparison retained all users, Memo IDs, friendships, messages, reminders, `memory_media`, `file_record` rows and MinIO objects.
-- Backend health is exposed at `/actuator/health`; Redis authentication was corrected so it reports UP instead of a false container-only health result.
+- `mvn test`: 24 passed, including moderation and legacy-schema Flyway migration.
+- `npm run build`: passed, 1797 modules transformed.
+- Playwright V1.7/V1.8 targeted set: 4 passed (mobile routes, friend search, geolocation, user report).
+- `npx cap sync android`: passed with the Capacitor geolocation plugin.
+- Android `assembleDebug`: passed; package version code 19 / `1.6.0-android-test`.
+- Docker was deliberately not restarted or recreated during this work.
 
 ## Important paths
 
 - Project: `D:\Codex\Project\memo-space-v1-20260826\memo-space`
 - Compose: `docker-compose.yml`
-- Backend schema: `backend/src/main/resources/schema.sql`
+- Backend migrations: `backend/src/main/resources/db/migration`
+- Moderation: `backend/src/main/java/com/memospace/service/ModerationService.java`
+- Report UI: `frontend/src/components/ReportModal.vue`, `frontend/src/views/AdminDashboardView.vue`
+- Location helper: `frontend/src/utils/geolocation.ts`
 - Relationship services: `backend/src/main/java/com/memospace/service/RelationshipService.java`, `RelationshipCategoryService.java`
 - Frontend source: `frontend/src`
 
@@ -49,3 +52,6 @@
 - Do not expose a signed object URL until the requesting user passes Memory permission checks.
 - Do not create a second relationship or space just because a new category tag is added.
 - Do not delete historical data when a category is hidden or a relationship is archived.
+- Do not expose moderation history or violation counts through ordinary public profile APIs.
+- Do not allow admin evidence URLs to become a general-purpose file bypass.
+- Do not modify an already-deployed Flyway migration; add a new numbered migration.
