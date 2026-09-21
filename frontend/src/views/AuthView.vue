@@ -13,7 +13,7 @@ const auth = useAuthStore()
 const registering = computed(() => route.path === '/register')
 const form = ref({ username: '', password: '', nickname: '' })
 const busy = ref(false)
-const message = ref('')
+const message = ref(route.query.reason === 'banned' ? '这个账号已被封禁，请联系管理员处理。' : '')
 const serverOpen = ref(isNativeApp())
 const serverAddress = ref(savedServerOrigin())
 const serverMessage = ref('')
@@ -68,7 +68,7 @@ const submit = async () => {
         <label v-if="registering" class="field"><span>怎么称呼你</span><input v-model="form.nickname" required maxlength="60" placeholder="你的昵称" /></label>
         <label class="field"><span>用户名</span><input v-model="form.username" required autocomplete="username" placeholder="3-24 位字母、数字或下划线" /></label>
         <label class="field"><span>密码</span><input v-model="form.password" required minlength="8" type="password" autocomplete="current-password" placeholder="至少 8 位" /></label>
-        <p v-if="message" class="form-error">{{ message }}</p>
+        <p v-if="message" class="form-error" role="alert">{{ message }}</p>
         <button class="button primary" :disabled="busy">{{ busy ? '正在打开空间…' : registering ? '开始记录' : '进入拾光空间' }}</button>
         <p style="margin-top:20px;text-align:center;font-size:13px">{{ registering ? '已经有账号？' : '第一次来到这里？' }} <router-link class="text-link" :to="registering ? '/login' : '/register'">{{ registering ? '直接登录' : '创建账号' }}</router-link></p>
       </form>

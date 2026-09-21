@@ -194,6 +194,7 @@ h1, h2, .serif { font-family: 'Noto Serif SC', serif; letter-spacing: -.02em; }
 .location-capture { margin:-2px 0 15px;display:flex;align-items:center;gap:12px; }
 .location-capture .button { flex:none;margin:0;display:inline-flex;align-items:center;gap:6px; }
 .location-capture small { color:var(--muted);font-size:10px;line-height:1.5; }
+.location-clear { flex:none;padding:4px 0;border:0;color:var(--accent);background:transparent;font-size:10px;text-decoration:underline;text-underline-offset:3px; }
 .memory-types { display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:21px; }
 .memory-types button { padding:13px 8px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--control-line);border-radius:14px;color:var(--muted);background:var(--surface-solid); }
 .memory-types button:hover { color:var(--ink);border-color:color-mix(in srgb,var(--accent) 55%,transparent); }
@@ -209,8 +210,15 @@ h1, h2, .serif { font-family: 'Noto Serif SC', serif; letter-spacing: -.02em; }
 .drop-zone input { display:none; }
 .drop-zone b { color:var(--ink);font-size:13px; }
 .drop-zone span { font-size:11px; }
+.selected-file-list { margin:-7px 0 14px;display:grid;gap:6px; }
+.selected-file-list>div { padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface); }
+.selected-file-list span,.selected-file-list b,.selected-file-list small { min-width:0;display:block; }
+.selected-file-list b { overflow:hidden;color:var(--ink);font-size:11px;text-overflow:ellipsis;white-space:nowrap; }
+.selected-file-list small { margin-top:2px;color:var(--muted);font-size:9px; }
+.selected-file-list button { width:28px;height:28px;flex:none;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;color:var(--muted);background:transparent; }
 .check-pills,.visibility-options { display:flex;flex-wrap:wrap;gap:8px; }
 .check-pills label,.visibility-options label { padding:8px 11px;border:1px solid var(--control-line);border-radius:11px;background:var(--surface-solid);font-size:12px; }
+.visibility-options label.disabled { opacity:.48;cursor:not-allowed; }
 .check-pills input,.visibility-options input { width:auto;margin-right:6px;accent-color:var(--accent-deep); }
 .form-error { margin:8px 0;color:var(--danger);font-size:13px;font-weight:600; }
 

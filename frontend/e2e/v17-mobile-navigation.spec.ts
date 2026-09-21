@@ -24,6 +24,7 @@ async function installApiMock(page: Page) {
     else if (path === '/home') body = { stats: { memories: 0, spaces: 1, places: 0 }, recent: [], today: [], feed: [] }
     else if (path === '/spaces') body = [{ id: 1, name: '我的私人空间', space_type: 'PERSONAL', status: 'ACTIVE', memoryCount: 0, photoCount: 0, placeCount: 0 }]
     else if (path === '/notifications' && request.method() === 'GET') body = []
+    else if (path === '/reports/mine') body = []
     else if (path === '/relationships/invitations') body = []
     else if (path === '/relationship-categories') body = [{ id: 1, name: '家人', icon: 'home', is_visible: true, relationship_count: 0 }]
     else if (path === '/relationships') body = []
@@ -77,6 +78,8 @@ test('手机端主要入口可连续进入并保持可操作', async ({ page }) 
   await page.getByRole('link', { name: '编辑资料' }).click()
   await expect(page).toHaveURL(/\/settings$/)
   await expectNoBlankPage(page, '设置')
+  await expect(page.locator('.page-wrap > .route-screen')).toHaveCount(1)
+  expect(await page.evaluate(() => window.scrollY)).toBe(0)
   await page.getByLabel('昵称').fill('拾光者-手机测试')
   await expect(page.getByLabel('昵称')).toHaveValue('拾光者-手机测试')
 

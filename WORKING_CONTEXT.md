@@ -8,6 +8,7 @@
 - Support user reports for Memory/comments and flexible manual moderation while preserving the rule that administrators cannot browse unrelated private data.
 - Support one-shot current-location capture on Web and Android after explicit user action.
 - Prevent post-deployment stale chunks from leaving navigation blank: revalidate `index.html`, cache hashed assets, and perform one guarded chunk-recovery reload.
+- Finish and stabilize the Web product first. Android/APK work is deferred until the Web experience is accepted.
 
 ## V1.6 acceptance
 
@@ -16,7 +17,7 @@
 - Admin can dismiss, remove the exact target, warn, mute for seven days, ban, or restore an account.
 - Banned users cannot log in or keep using old REST sessions. Muted users may read but cannot publish Memory/comments/space messages/chat.
 - Existing data survives V1→V2 Flyway migration.
-- Web build, Android sync/APK build, backend suite, and browser navigation/location/report tests pass.
+- Web production build, backend suite, and browser navigation/location/report/moderation tests pass.
 
 ## Decisions implemented
 
@@ -26,13 +27,14 @@
 - Three administrators are configured in the ignored local `.env`; public examples do not contain their secrets.
 - Current location is not collected in the background. It is requested only from the map or Memory editor.
 
-## Verification state (2026-09-20)
+## Verification state (2026-09-21)
 
 - `mvn test`: 24 passed, including moderation and legacy-schema Flyway migration.
 - `npm run build`: passed, 1797 modules transformed.
-- Playwright V1.7/V1.8 targeted set: 4 passed (mobile routes, friend search, geolocation, user report).
-- `npx cap sync android`: passed with the Capacitor geolocation plugin.
-- Android `assembleDebug`: passed; package version code 19 / `1.6.0-android-test`.
+- Playwright Web V1.7/V1.8/V1.9 targeted set: 8 passed (mobile-browser route completion, friend search, geolocation, location Memory submission, user report, report progress, admin video evidence/penalty, and banned-session logout).
+- User report history now appears under “消息与通知 → 我的举报”; admin evidence supports both images and videos.
+- Memory creation validates media type/size, relationship visibility, location input, and exposes upload progress.
+- Android/APK was deliberately not touched in this Web-first stabilization pass.
 - Docker was deliberately not restarted or recreated during this work.
 
 ## Important paths

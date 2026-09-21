@@ -11,6 +11,13 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(undefined, (error) => {
+  const responseMessage = String(error.response?.data?.message || '')
+  if (error.response?.status === 403 && responseMessage.includes('账号已被封禁')) {
+    localStorage.removeItem('memospace_token')
+    localStorage.removeItem('memospace_user')
+    if (!location.pathname.includes('/login')) location.href = '/login?reason=banned'
+    return Promise.reject(error)
+  }
   if (error.response?.status === 401 && !location.pathname.includes('/login')) {
     localStorage.removeItem('memospace_token')
     localStorage.removeItem('memospace_user')

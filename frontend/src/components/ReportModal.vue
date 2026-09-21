@@ -26,15 +26,15 @@ const submit = async () => {
 
 <template>
   <Teleport to="body">
-    <div class="modal-backdrop" @click.self="emit('close')">
-      <section class="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title">
-        <header><div><span class="report-mark"><Flag :size="18" /></span><div><span class="eyebrow">COMMUNITY REPORT</span><h2 id="report-title">举报这条{{targetType==='MEMORY'?'记忆':'评论'}}</h2></div></div><button class="icon-button" aria-label="关闭" @click="emit('close')"><X :size="18" /></button></header>
+    <div class="modal-backdrop" @click.self="!busy && emit('close')" @keydown.esc="!busy && emit('close')">
+      <form class="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title" @submit.prevent="submit">
+        <header><div><span class="report-mark"><Flag :size="18" /></span><div><span class="eyebrow">COMMUNITY REPORT</span><h2 id="report-title">举报这条{{targetType==='MEMORY'?'记忆':'评论'}}</h2></div></div><button type="button" class="icon-button" :disabled="busy" aria-label="关闭" @click="emit('close')"><X :size="18" /></button></header>
         <p>举报对象：<b>{{targetTitle}}</b>。管理员只能查看这条被举报的证据，不会因此获得浏览用户其他私密内容的权限。</p>
         <label class="field"><span>举报原因</span><select v-model="reason"><option v-for="item in reasons" :key="item[0]" :value="item[0]">{{item[1]}}</option></select></label>
         <label class="field"><span>补充说明</span><textarea v-model="description" maxlength="500" rows="4" placeholder="请说明具体问题，便于管理员判断（可选）"></textarea></label>
-        <p v-if="message" class="form-error">{{message}}</p>
-        <footer><button class="button" @click="emit('close')">取消</button><button class="button primary" :disabled="busy" @click="submit">{{busy?'正在提交…':'提交举报'}}</button></footer>
-      </section>
+        <p v-if="message" class="form-error" role="alert">{{message}}</p>
+        <footer><button type="button" class="button" :disabled="busy" @click="emit('close')">取消</button><button type="submit" class="button primary" :disabled="busy">{{busy?'正在提交…':'提交举报'}}</button></footer>
+      </form>
     </div>
   </Teleport>
 </template>

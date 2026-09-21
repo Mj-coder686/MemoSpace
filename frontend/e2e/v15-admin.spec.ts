@@ -18,9 +18,10 @@ test('administrator login, privacy boundary, user denial and smooth identity swi
   await adminPage.getByLabel('管理员密码').fill(adminPassword)
   await adminPage.getByRole('button', { name: '进入管理员中心' }).click()
   await expect(adminPage).toHaveURL(/\/admin$/)
-  await expect(adminPage.getByRole('heading', { name: '朋友账号管理' })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: '社区安全与账号管理' })).toBeVisible()
+  await adminPage.getByRole('button', { name: '用户目录' }).click()
   await expect(adminPage.locator('.admin-user-row').first()).toBeVisible()
-  await expect(adminPage.getByRole('button', { name: '修改 ID' }).first()).toBeVisible()
+  await expect(adminPage.getByRole('button', { name: '改 ID' }).first()).toBeVisible()
   await expect(adminPage.getByRole('button', { name: '重置密码' }).first()).toBeVisible()
 
   const adminId = await adminPage.evaluate(async () => {
@@ -37,7 +38,7 @@ test('administrator login, privacy boundary, user denial and smooth identity swi
   expect(privacy.map(item => item.status)).toEqual([403, 403, 403, 403])
   expect(privacy.every(item => item.body.includes('管理员会话不能访问用户'))).toBe(true)
 
-  await adminPage.getByRole('button', { name: '修改 ID' }).first().click()
+  await adminPage.getByRole('button', { name: '改 ID' }).first().click()
   await expect(adminPage.getByRole('heading', { name: '修改 Memo ID' })).toBeVisible()
   await adminPage.getByRole('button', { name: '取消' }).click()
   await adminPage.screenshot({ path: testInfo.outputPath('admin-dashboard.png'), fullPage: true })
