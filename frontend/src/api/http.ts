@@ -26,5 +26,13 @@ http.interceptors.response.use(undefined, (error) => {
   return Promise.reject(error)
 })
 
-export const errorMessage = (error: any) => error?.response?.data?.message || error?.message || '请稍后再试'
+export const errorMessage = (error: any) => {
+  const serverMessage = error?.response?.data?.message
+  if (serverMessage) return serverMessage
+  if (error?.code === 'ECONNABORTED') return '服务器响应超时，请稍后重试。'
+  if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
+    return '暂时无法连接服务器，请检查网络后刷新页面重试。'
+  }
+  return error?.message || '请稍后再试'
+}
 export default http

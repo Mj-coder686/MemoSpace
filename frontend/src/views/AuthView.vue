@@ -37,7 +37,12 @@ const submit = async () => {
     if (registering.value) await auth.register(form.value.username, form.value.password, form.value.nickname)
     else await auth.login(form.value.username, form.value.password)
     router.push('/home')
-  } catch (error) { message.value = errorMessage(error) }
+  } catch (error) {
+    const detail = errorMessage(error)
+    message.value = detail === '管理员账号请从管理员入口登录'
+      ? '这是管理员账号，请点击上方“管理员”入口登录。'
+      : detail
+  }
   finally { busy.value = false }
 }
 </script>

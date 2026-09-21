@@ -5,8 +5,8 @@ defineProps<{ admin?: boolean }>()
 <template>
   <nav class="login-mode-switch" :class="{ admin }" aria-label="登录身份切换">
     <span class="mode-slider"></span>
-    <router-link to="/login" :aria-current="!admin?'page':undefined">用户登录</router-link>
-    <router-link to="/admin/login" :aria-current="admin?'page':undefined">管理员</router-link>
+    <a href="/login" :aria-current="!admin?'page':undefined">用户登录</a>
+    <a href="/admin/login" :aria-current="admin?'page':undefined">管理员</a>
   </nav>
 </template>
 
