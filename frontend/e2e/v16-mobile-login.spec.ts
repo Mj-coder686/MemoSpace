@@ -22,13 +22,10 @@ test('旧演示账号会退出且不影响真实账号迁移', async ({ page }) 
   await expect.poll(() => page.evaluate(() => localStorage.getItem('memospace_token'))).toBeNull()
 })
 
-test('手机尺寸下可展开服务器连接设置', async ({ page }) => {
+test('登录页不再要求填写局域网服务器地址', async ({ page }) => {
   await page.goto('/login')
 
-  const connectionEntry = page.getByRole('button', { name: '手机 APK 连接服务器设置' })
-  await expect(connectionEntry).toBeVisible()
-  await connectionEntry.click()
-
-  await expect(page.getByRole('textbox', { name: '服务器地址' })).toBeVisible()
-  await expect(page.getByText('首次试用时，填入运行 Docker 的电脑地址')).toBeVisible()
+  await expect(page.getByText('手机 APK 连接服务器设置')).toHaveCount(0)
+  await expect(page.getByText('首次试用时，填入运行 Docker 的电脑地址')).toHaveCount(0)
+  await expect(page.getByPlaceholder('http://192.168.x.x:18081')).toHaveCount(0)
 })

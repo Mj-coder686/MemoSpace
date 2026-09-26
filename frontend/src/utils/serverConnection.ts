@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 
 const SERVER_ORIGIN_KEY = 'memospace_server_origin'
+export const PRODUCTION_SERVER_ORIGIN = 'https://memospace.fun'
 
 const trimTrailingSlashes = (value: string) => value.replace(/\/+$/, '')
 
@@ -10,23 +11,29 @@ export const normalizeServerOrigin = (value: string) => {
   const raw = trimTrailingSlashes(value.trim().replace(/\/api$/i, ''))
   if (!raw) return ''
   const parsed = new URL(raw)
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('服务器地址必须以 http:// 或 https:// 开头')
+  if (parsed.protocol !== 'https:') throw new Error('服务器地址必须使用 https:// 安全连接')
   return trimTrailingSlashes(parsed.origin + parsed.pathname.replace(/\/$/, ''))
 }
 
 export const savedServerOrigin = () => {
   const saved = localStorage.getItem(SERVER_ORIGIN_KEY)
-  if (saved) return saved
   const configured = import.meta.env.VITE_NATIVE_SERVER_URL as string | undefined
-  return configured ? normalizeServerOrigin(configured) : ''
+  const fallback = normalizeServerOrigin(configured || PRODUCTION_SERVER_ORIGIN)
+  if (!saved) return fallback
+  try {
+    return normalizeServerOrigin(saved)
+  } catch {
+    localStorage.removeItem(SERVER_ORIGIN_KEY)
+    return fallback
+  }
 }
 
 export const saveServerOrigin = (value: string) => {
   const normalized = normalizeServerOrigin(value)
-  if (!normalized) localStorage.removeItem(SERVER_ORIGIN_KEY)
+  if (!normalized || normalized === PRODUCTION_SERVER_ORIGIN) localStorage.removeItem(SERVER_ORIGIN_KEY)
   else localStorage.setItem(SERVER_ORIGIN_KEY, normalized)
   window.dispatchEvent(new CustomEvent('memospace-server-changed'))
-  return normalized
+  return normalized || PRODUCTION_SERVER_ORIGIN
 }
 
 export const apiBaseUrl = () => {
@@ -49,4 +56,4 @@ export const websocketUrl = () => {
   return `${protocol}//${location.host}/ws/chat`
 }
 
-export const requiresServerConfiguration = () => isNativeApp() && !savedServerOrigin()
+export const requiresServerConfiguration = () => false

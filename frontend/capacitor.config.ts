@@ -5,13 +5,13 @@ const config: CapacitorConfig = {
   appName: '拾光空间',
   webDir: 'dist',
   backgroundColor: '#f5f2ec',
-  loggingBehavior: 'debug',
+  loggingBehavior: 'none',
   server: {
     androidScheme: 'https',
-    cleartext: true,
+    cleartext: false,
   },
   android: {
-    allowMixedContent: true,
+    allowMixedContent: false,
     backgroundColor: '#f5f2ec',
   },
   plugins: {
