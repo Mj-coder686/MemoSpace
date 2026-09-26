@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowRight, CheckCircle2, Server, Wifi, WifiOff } from 'lucide-vue-next'
+import { ArrowRight, WifiOff } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { errorMessage } from '../api/http'
 import UiBanner from '../components/ui/UiBanner.vue'
 import UiButton from '../components/ui/UiButton.vue'
 import UiInput from '../components/ui/UiInput.vue'
-import { isNativeApp, PRODUCTION_SERVER_ORIGIN, saveServerOrigin, savedServerOrigin } from '../utils/serverConnection'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const registering = computed(() => route.path === '/register')
-const native = isNativeApp()
 const form = ref({ username: '', password: '', nickname: '' })
 const busy = ref(false)
 const submitted = ref(false)
@@ -21,10 +19,6 @@ const message = ref('')
 const connectionIssue = ref(false)
 const successMessage = ref('')
 const online = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
-const serverOpen = ref(false)
-const serverAddress = ref(savedServerOrigin())
-const serverMessage = ref('')
-const serverError = ref('')
 
 const banned = computed(() => route.query.reason === 'banned')
 const usernameError = computed(() => {
@@ -60,18 +54,6 @@ watch(registering, () => {
   connectionIssue.value = false
   successMessage.value = ''
 })
-
-const saveServer = () => {
-  serverMessage.value = ''
-  serverError.value = ''
-  try {
-    const origin = saveServerOrigin(serverAddress.value)
-    serverAddress.value = origin
-    serverMessage.value = `连接地址已保存：${origin}`
-  } catch (error) {
-    serverError.value = error instanceof Error ? error.message : '服务器地址格式不正确'
-  }
-}
 
 const submit = async () => {
   submitted.value = true
@@ -150,36 +132,6 @@ const submit = async () => {
             />
             <UiBanner v-if="successMessage" tone="success" title="创建成功" :description="successMessage" />
           </div>
-
-          <section v-if="native" class="identity-server" aria-label="服务器连接">
-            <button
-              type="button"
-              class="identity-server__summary"
-              :aria-expanded="serverOpen"
-              aria-controls="server-connection-panel"
-              @click="serverOpen = !serverOpen"
-            >
-              <span class="identity-server__status"><Wifi :size="17" aria-hidden="true" />连接设置</span>
-              <span class="identity-server__origin">{{ serverAddress }}</span>
-              <span class="identity-server__action">{{ serverOpen ? '收起' : '更改' }}</span>
-            </button>
-            <div v-if="serverOpen" id="server-connection-panel" class="identity-server__body">
-              <p>仅在迁移服务器时更改。正式地址为 {{ PRODUCTION_SERVER_ORIGIN }}，自定义地址必须使用 HTTPS。</p>
-              <UiInput
-                v-model="serverAddress"
-                label="HTTPS 服务器地址"
-                name="server-origin"
-                inputmode="url"
-                autocomplete="url"
-                placeholder="https://example.com"
-                :error="serverError"
-              />
-              <div class="identity-server__footer">
-                <UiButton type="button" size="sm" variant="tonal" @click="saveServer"><Server :size="16" />保存连接</UiButton>
-                <span v-if="serverMessage" class="identity-server__saved"><CheckCircle2 :size="15" />{{ serverMessage }}</span>
-              </div>
-            </div>
-          </section>
 
           <div class="identity-card__fields">
             <UiInput

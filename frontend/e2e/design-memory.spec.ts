@@ -45,6 +45,7 @@ const seedSession = async (page: Page) => {
 }
 
 const routeMemory = async (page: Page, options: { detailStatus?: number; commentFails?: boolean } = {}) => {
+  const deletedIds: number[] = []
   await page.route('**/api/**', async (route) => {
     const request = route.request()
     const url = new URL(request.url())
@@ -58,6 +59,10 @@ const routeMemory = async (page: Page, options: { detailStatus?: number; comment
       if (options.detailStatus) return route.fulfill({ status: options.detailStatus, json: { message: 'sensitive server detail must not leak' } })
       return route.fulfill({ json: detail })
     }
+    if (url.pathname === '/api/memories/11' && request.method() === 'DELETE') {
+      deletedIds.push(11)
+      return route.fulfill({ json: { message: '记忆已删除' } })
+    }
     if (url.pathname === '/api/memories/11/comments' && request.method() === 'POST') {
       if (options.commentFails) return route.fulfill({ status: 403, json: { message: '账号已禁言至 2026-09-30' } })
       return route.fulfill({ json: { id: 99 } })
@@ -67,6 +72,7 @@ const routeMemory = async (page: Page, options: { detailStatus?: number; comment
     if (url.pathname.includes('/users/me/appearance')) return route.fulfill({ json: {} })
     return route.fulfill({ json: [] })
   })
+  return { deletedIds }
 }
 
 test('memory archive searches, filters, and opens a validated creation flow', async ({ page }) => {
@@ -112,6 +118,7 @@ test('memory detail loads protected media and failed comments keep the draft', a
   await expect(page.getByText('仅所属共同空间的合法成员可见')).toBeVisible()
   await expect(page.getByRole('img', { name: '江边的晚风' })).toBeVisible()
   await expect(page.getByText('和小岚的共同空间')).toBeVisible()
+  await expect(page.getByRole('button', { name: '删除这条记忆' })).toBeVisible()
 
   await page.getByRole('button', { name: '预览媒体：江边的晚风' }).click()
   await expect(page.getByRole('dialog', { name: '媒体预览' })).toBeVisible()
@@ -122,6 +129,29 @@ test('memory detail loads protected media and failed comments keep the draft', a
   await page.getByRole('button', { name: '发送评论' }).click()
   await expect(page.getByRole('alert')).toContainText('账号已禁言至 2026-09-30')
   await expect(composer).toHaveValue('这句话在失败后也不能消失')
+})
+
+test('owned memory supports touch long-press deletion with explicit confirmation', async ({ page }) => {
+  await seedSession(page)
+  const capture = await routeMemory(page)
+  await page.setViewportSize({ width: 393, height: 852 })
+  await page.goto('/memories')
+
+  const card = page.getByRole('heading', { name: '江边的晚风' }).locator('..').locator('..')
+  const box = await card.boundingBox()
+  expect(box).not.toBeNull()
+  await card.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: box!.x + 24, clientY: box!.y + 24 })
+  await page.waitForTimeout(600)
+  await card.dispatchEvent('pointerup', { pointerType: 'touch', clientX: box!.x + 24, clientY: box!.y + 24 })
+
+  const dialog = page.getByRole('dialog', { name: '删除这条记忆？' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText('公开动态和所属空间中移除')
+  await dialog.getByRole('button', { name: '确认删除' }).click()
+
+  await expect(page.getByRole('heading', { name: '江边的晚风' })).toHaveCount(0)
+  await expect(page.getByText('记忆已删除', { exact: true })).toBeVisible()
+  expect(capture.deletedIds).toEqual([11])
 })
 
 test('forbidden memory does not expose server or content details', async ({ page }) => {

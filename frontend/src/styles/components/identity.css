@@ -229,85 +229,6 @@
   color: var(--color-text-tertiary);
 }
 
-.identity-server {
-  border: var(--border-hairline) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-subtle);
-  overflow: hidden;
-}
-
-.identity-server__summary {
-  width: 100%;
-  min-height: var(--control-md);
-  padding: var(--space-2) var(--space-3);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-text-primary);
-  background: transparent;
-  border: 0;
-  text-align: left;
-}
-
-.identity-server__summary:hover {
-  background: var(--color-action-primary-soft);
-}
-
-.identity-server__status,
-.identity-server__saved {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.identity-server__status {
-  font-size: var(--type-body-sm-size);
-  font-weight: 700;
-}
-
-.identity-server__origin {
-  overflow: hidden;
-  color: var(--color-text-tertiary);
-  font-size: var(--type-micro-size);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.identity-server__action {
-  color: var(--color-text-link);
-  font-size: var(--type-caption-size);
-  font-weight: 700;
-}
-
-.identity-server__body {
-  padding: var(--space-4);
-  display: grid;
-  gap: var(--space-3);
-  border-top: var(--border-hairline) solid var(--color-border-subtle);
-}
-
-.identity-server__body > p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--type-caption-size);
-  line-height: var(--type-caption-line);
-}
-
-.identity-server__footer {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.identity-server__saved {
-  min-width: 0;
-  color: var(--color-success-fg);
-  font-size: var(--type-micro-size);
-  overflow-wrap: anywhere;
-}
-
 .identity-form-enter-active,
 .identity-form-leave-active {
   transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-base) var(--ease-spring-soft);
@@ -558,21 +479,6 @@
     align-items: flex-start;
     flex-direction: column;
     gap: var(--space-2);
-  }
-
-  .identity-server__summary {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .identity-server__origin {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
-  .identity-server__action {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
   }
 
   .admin-identity-card {

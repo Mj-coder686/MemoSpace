@@ -146,6 +146,7 @@
 }
 
 .archive-memory-card {
+  position: relative;
   overflow: hidden;
   color: var(--color-text-primary);
   background: var(--color-surface-raised);
@@ -153,6 +154,59 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
   transition: transform var(--motion-base) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.archive-memory-card__delete {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 3;
+  color: var(--color-danger-fg);
+  background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+  opacity: 0;
+  transform: scale(.96);
+  transition: opacity var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+}
+
+.archive-memory-card:hover .archive-memory-card__delete,
+.archive-memory-card:focus-within .archive-memory-card__delete {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.memory-delete-confirmation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.memory-delete-confirmation__icon {
+  width: var(--control-md);
+  height: var(--control-md);
+  display: grid;
+  place-items: center;
+  color: var(--color-danger-fg);
+  background: var(--color-danger-bg);
+  border-radius: var(--radius-full);
+}
+
+.memory-delete-confirmation strong {
+  color: var(--color-text-primary);
+}
+
+.memory-delete-confirmation p {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  line-height: var(--type-body-line);
+}
+
+.memory-owner-actions {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  display: flex;
+  justify-content: flex-end;
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
 }
 
 .archive-memory-card:hover {
@@ -375,6 +429,13 @@
 @media (prefers-reduced-motion: reduce) {
   .archive-memory-card {
     transition: none;
+  }
+}
+
+@media (hover: none) {
+  .archive-memory-card__delete {
+    opacity: 1;
+    transform: none;
   }
 }
 

@@ -4,8 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { Plus, Search, X } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import MemoryCard from '../components/MemoryCard.vue'
+import MemoryDeleteDialog from '../components/MemoryDeleteDialog.vue'
 import EmptyState from '../components/EmptyState.vue'
-import { UiButton, UiChip, UiSkeleton } from '../components/ui'
+import { UiBanner, UiButton, UiChip, UiSkeleton } from '../components/ui'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +16,8 @@ const activeQuery = ref(String(route.query.q || ''))
 const type = ref('ALL')
 const loading = ref(true)
 const pageError = ref('')
+const statusMessage = ref('')
+const deleteTarget = ref<any | null>(null)
 
 const typeOptions = [
   { value: 'ALL', label: '全部' },
@@ -54,6 +57,11 @@ const clearSearch = async () => {
 }
 
 const openCreate = () => window.dispatchEvent(new CustomEvent('memospace-open-create'))
+const deleted = (memory: any) => {
+  memories.value = memories.value.filter((item) => Number(item.id) !== Number(memory.id))
+  deleteTarget.value = null
+  statusMessage.value = `“${memory.title}”已删除。`
+}
 
 watch(() => route.query.q, (value) => {
   query.value = String(value || '')
@@ -73,6 +81,8 @@ onMounted(load)
       </div>
       <UiButton variant="primary" size="lg" @click="openCreate"><Plus :size="18" />记录此刻</UiButton>
     </header>
+
+    <UiBanner v-if="statusMessage" tone="success" title="记忆已删除" :description="statusMessage" />
 
     <section class="memory-archive-tools" aria-label="搜索与筛选">
       <form class="memory-search" role="search" @submit.prevent="search">
@@ -105,7 +115,7 @@ onMounted(load)
     />
 
     <div v-else-if="filtered.length" class="memory-archive-grid">
-      <MemoryCard v-for="item in filtered" :key="item.id" :memory="item" />
+      <MemoryCard v-for="item in filtered" :key="item.id" :memory="item" can-delete @request-delete="deleteTarget = $event" />
     </div>
 
     <EmptyState
@@ -133,5 +143,7 @@ onMounted(load)
       action-label="查看全部"
       @action="type = 'ALL'"
     />
+
+    <MemoryDeleteDialog :memory="deleteTarget" @close="deleteTarget = null" @deleted="deleted" />
   </div>
 </template>

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import {
-  ArrowLeft, Bookmark, Flag, Globe2, LockKeyhole, MapPin, MessageCircle, RefreshCw, Send, UsersRound,
+  ArrowLeft, Bookmark, Flag, Globe2, LockKeyhole, MapPin, MessageCircle, RefreshCw, Send, Trash2, UsersRound,
 } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import PrivateMedia from '../components/PrivateMedia.vue'
 import ReportModal from '../components/ReportModal.vue'
+import MemoryDeleteDialog from '../components/MemoryDeleteDialog.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { UiBanner, UiButton, UiDialog, UiSkeleton } from '../components/ui'
 import { useAuthStore } from '../stores/auth'
@@ -15,6 +16,7 @@ import { useAuthStore } from '../stores/auth'
 type PageState = 'loading' | 'ready' | 'forbidden' | 'not-found' | 'error'
 
 const auth = useAuthStore()
+const router = useRouter()
 const id = Number(useRoute().params.id)
 const memory = ref<any>(null)
 const comment = ref('')
@@ -26,6 +28,8 @@ const pageError = ref('')
 const actionBusy = ref(false)
 const reportTarget = ref<{ type: 'MEMORY' | 'COMMENT'; id: number; title: string } | null>(null)
 const previewMedia = ref<any | null>(null)
+const deleteTarget = ref<any | null>(null)
+const isOwner = computed(() => Number(memory.value?.creator_id) === Number(auth.user?.id))
 
 const visibility = computed(() => ({
   PRIVATE: { label: '仅自己可见', description: '只保存在创建者的私人空间', icon: LockKeyhole },
@@ -98,6 +102,11 @@ const favorite = async () => {
 const reported = () => {
   reportTarget.value = null
   statusMessage.value = '举报已提交。你可以在“通知 → 我的举报”中查看处理进度。'
+}
+
+const deleted = async () => {
+  deleteTarget.value = null
+  await router.replace('/memories')
 }
 </script>
 
@@ -174,6 +183,9 @@ const reported = () => {
           </section>
 
           <button v-if="memory.creator_id !== auth.user?.id" class="memory-report-entry" type="button" @click="reportTarget = { type: 'MEMORY', id, title: memory.title }"><Flag :size="14" />举报这条记忆</button>
+          <div v-if="isOwner" class="memory-owner-actions">
+            <UiButton variant="danger" size="sm" @click="deleteTarget = memory"><Trash2 :size="16" />删除这条记忆</UiButton>
+          </div>
         </article>
 
         <aside class="memory-detail-aside">
@@ -221,5 +233,6 @@ const reported = () => {
     </UiDialog>
 
     <ReportModal v-if="reportTarget" :target-type="reportTarget.type" :target-id="reportTarget.id" :target-title="reportTarget.title" @close="reportTarget = null" @reported="reported" />
+    <MemoryDeleteDialog :memory="deleteTarget" @close="deleteTarget = null" @deleted="deleted" />
   </div>
 </template>

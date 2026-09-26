@@ -4,13 +4,16 @@ import { useRouter } from 'vue-router'
 import { ArrowRight, Search, UserPlus, UsersRound, X } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import MemoryCard from '../components/MemoryCard.vue'
+import MemoryDeleteDialog from '../components/MemoryDeleteDialog.vue'
 import EmptyState from '../components/EmptyState.vue'
 import UserAvatar from '../components/UserAvatar.vue'
 import { UiBanner, UiButton, UiIconButton, UiSkeleton } from '../components/ui'
+import { useAuthStore } from '../stores/auth'
 
 type FeedScope = 'latest' | 'following'
 
 const router = useRouter()
+const auth = useAuthStore()
 const scope = ref<FeedScope>('latest')
 const feed = ref<any[]>([])
 const people = ref<any[]>([])
@@ -22,6 +25,7 @@ const feedError = ref('')
 const searchError = ref('')
 const message = ref('')
 const followBusy = ref<number | null>(null)
+const deleteTarget = ref<any | null>(null)
 
 const loadFeed = async (nextScope: FeedScope = scope.value) => {
   scope.value = nextScope
@@ -79,6 +83,12 @@ const follow = async (person: any) => {
 }
 
 const invite = (person: any) => router.push({ path: '/relationships', query: { inviteUser: String(person.id), inviteName: person.nickname } })
+const canDelete = (memory: any) => Number(memory.creator_id) === Number(auth.user?.id)
+const deleted = (memory: any) => {
+  feed.value = feed.value.filter((item) => Number(item.id) !== Number(memory.id))
+  deleteTarget.value = null
+  message.value = `“${memory.title}”已从动态和记忆库中删除。`
+}
 
 onMounted(() => loadFeed())
 </script>
@@ -115,8 +125,9 @@ onMounted(() => loadFeed())
       </div>
       <UiBanner v-if="feedError" tone="danger" title="动态暂时没有载入" :description="feedError"><template #actions><UiButton variant="ghost" size="sm" @click="loadFeed()">重新载入</UiButton></template></UiBanner>
       <div v-else-if="feedLoading" class="explore-feed-loading"><UiSkeleton v-for="height in ['360px','440px','320px','390px']" :key="height" :height="height" radius="var(--radius-lg)" /></div>
-      <div v-else-if="feed.length" class="explore-feed-grid"><MemoryCard v-for="item in feed" :key="item.id" :memory="item" /></div>
+      <div v-else-if="feed.length" class="explore-feed-grid"><MemoryCard v-for="item in feed" :key="item.id" :memory="item" :can-delete="canDelete(item)" @request-delete="deleteTarget = $event" /></div>
       <EmptyState v-else :kind="scope==='following' ? 'search' : 'empty'" :title="scope==='following' ? '关注的人还没有公开新记忆' : '公共动态还很安静'" :text="scope==='following' ? '可以先搜索一个你认识的人；关注不会自动建立好友或关系。' : '公开发布的 Memory 会依照时间出现在这里。'"><template v-if="scope==='following'" #actions><UiButton variant="primary" @click="focusSearch"><UsersRound :size="16" />寻找一个人</UiButton></template></EmptyState>
     </section>
+    <MemoryDeleteDialog :memory="deleteTarget" @close="deleteTarget = null" @deleted="deleted" />
   </main>
 </template>

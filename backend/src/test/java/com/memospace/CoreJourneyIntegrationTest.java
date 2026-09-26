@@ -85,6 +85,33 @@ class CoreJourneyIntegrationTest {
     }
 
     @Test
+    void onlyTheCreatorCanDeleteAMemoryAndItsPublicFeedEntryDisappears() throws Exception {
+        JsonNode owner = postJson("/api/auth/register", Map.of(
+                "username", "delete_owner", "password", "Memo123!", "nickname", "删除测试创建者"), null, 200);
+        JsonNode viewer = postJson("/api/auth/register", Map.of(
+                "username", "delete_viewer", "password", "Memo123!", "nickname", "删除测试访问者"), null, 200);
+        String ownerToken = owner.get("token").asText();
+        String viewerToken = viewer.get("token").asText();
+
+        JsonNode memory = postJson("/api/memories", Map.of(
+                "title", "可以被本人删除的动态", "memoryType", "TEXT", "visibility", "PUBLIC"), ownerToken, 200);
+        long memoryId = memory.get("id").asLong();
+
+        mvc.perform(delete("/api/memories/{id}", memoryId).header("Authorization", bearer(viewerToken)))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/memories/{id}", memoryId).header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk());
+
+        mvc.perform(delete("/api/memories/{id}", memoryId).header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/memories/{id}", memoryId).header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isForbidden());
+        String feed = mvc.perform(get("/api/feed").header("Authorization", bearer(viewerToken)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertFalse(feed.contains("可以被本人删除的动态"));
+    }
+
+    @Test
     void relationshipCategoriesHideRestoreAndReuseOneSpace() throws Exception {
         JsonNode carol = postJson("/api/auth/register", Map.of(
                 "username", "carol_categories", "password", "Memo123!", "nickname", "Carol"), null, 200);
