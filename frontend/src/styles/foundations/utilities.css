@@ -1,0 +1,71 @@
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.container-reading,
+.container-content,
+.container-wide,
+.container-admin {
+  width: min(calc(100% - (2 * var(--space-4))), var(--container-width));
+  margin-inline: auto;
+}
+
+.container-reading { --container-width: var(--container-reading); }
+.container-content { --container-width: var(--container-content); }
+.container-wide { --container-width: var(--container-wide); }
+.container-admin { --container-width: var(--container-admin); }
+
+.safe-top { padding-top: var(--safe-top); }
+.safe-bottom { padding-bottom: var(--safe-bottom); }
+.safe-inline {
+  padding-right: var(--safe-right);
+  padding-left: var(--safe-left);
+}
+
+.surface-default {
+  color: var(--color-text-primary);
+  background: var(--color-surface-default);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.surface-raised {
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 600px) {
+  .container-reading,
+  .container-content,
+  .container-wide,
+  .container-admin {
+    width: min(calc(100% - (2 * var(--space-6))), var(--container-width));
+  }
+}
+
+@media (min-width: 840px) {
+  .container-reading,
+  .container-content,
+  .container-wide,
+  .container-admin {
+    width: min(calc(100% - 56px), var(--container-width));
+  }
+}
+
+@media (min-width: 1200px) {
+  .container-reading,
+  .container-content,
+  .container-wide,
+  .container-admin {
+    width: min(calc(100% - (2 * var(--space-8))), var(--container-width));
+  }
+}

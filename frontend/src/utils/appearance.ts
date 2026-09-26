@@ -11,7 +11,7 @@ let activeImageUrl = ''
 
 export const applyAppearance = (appearance:Appearance, imageUrl = '') => {
   const root = document.documentElement
-  root.style.setProperty('--user-background', appearance.background_color || '#f5f2ec')
+  root.style.setProperty('--user-background', appearance.background_color || 'var(--color-bg-canvas)')
   root.style.setProperty('--user-bg-brightness', `${appearance.background_brightness ?? 100}%`)
   root.style.setProperty('--user-bg-overlay', `${(appearance.background_overlay ?? 0) / 100}`)
   root.style.setProperty('--user-bg-image', imageUrl ? `url("${imageUrl}")` : 'none')

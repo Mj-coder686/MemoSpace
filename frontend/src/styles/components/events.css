@@ -1,0 +1,35 @@
+.event-detail-loading { display: grid; gap: var(--space-4); }
+.event-detail-hero {
+  min-height: 290px;
+  margin-block: var(--space-3) var(--space-8);
+  padding: var(--space-9);
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) minmax(240px, 340px);
+  align-items: center;
+  gap: var(--space-6);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.event-detail-mark { width: 64px; height: 64px; display: grid; place-items: center; color: var(--color-text-inverse); background: var(--color-action-primary); border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-xs); }
+.event-detail-hero > div { min-width: 0; }
+.event-detail-hero h1 { margin: var(--space-2) 0; font-family: var(--font-display); font-size: var(--type-display-sm-size); line-height: var(--type-display-sm-line); }
+.event-detail-hero p { max-width: 58ch; margin: 0; color: var(--color-text-secondary); line-height: var(--type-body-md-line); }
+.event-detail-hero dl { margin: 0; padding-left: var(--space-6); display: grid; gap: var(--space-5); border-left: var(--border-hairline) solid var(--color-border-subtle); }
+.event-detail-hero dl div { display: grid; gap: var(--space-1); }
+.event-detail-hero dt { color: var(--color-text-tertiary); font-size: var(--type-caption-size); }
+.event-detail-hero dd { margin: 0; display: flex; align-items: center; gap: var(--space-1); font-size: var(--type-body-sm-size); font-weight: 650; }
+.event-memory-section { padding-bottom: var(--space-16); }
+
+@media (max-width: 839px) {
+  .event-detail-hero { min-height: 0; padding: var(--space-6); grid-template-columns: 56px minmax(0, 1fr); }
+  .event-detail-mark { width: 56px; height: 56px; }
+  .event-detail-hero dl { grid-column: 1 / -1; padding: var(--space-4) 0 0; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: var(--border-hairline) solid var(--color-border-subtle); border-left: 0; }
+}
+
+@media (max-width: 520px) {
+  .event-detail-hero { padding: var(--space-5); grid-template-columns: 1fr; }
+  .event-detail-hero h1 { font-size: var(--type-heading-1-size); line-height: var(--type-heading-1-line); }
+  .event-detail-hero dl { grid-template-columns: 1fr; }
+}

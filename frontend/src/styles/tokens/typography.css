@@ -1,0 +1,48 @@
+:root {
+  --font-sans: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", Roboto, system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --type-display-lg-size: 56px;
+  --type-display-lg-line: 64px;
+  --type-display-sm-size: 44px;
+  --type-display-sm-line: 54px;
+  --type-heading-1-size: 40px;
+  --type-heading-1-line: 48px;
+  --type-heading-2-size: 30px;
+  --type-heading-2-line: 38px;
+  --type-heading-3-size: 22px;
+  --type-heading-3-line: 30px;
+  --type-title-lg-size: 18px;
+  --type-title-lg-line: 26px;
+  --type-title-md-size: 16px;
+  --type-title-md-line: 24px;
+  --type-body-lg-size: 16px;
+  --type-body-lg-line: 28px;
+  --type-body-md-size: 14px;
+  --type-body-md-line: 22px;
+  --type-body-sm-size: 13px;
+  --type-body-sm-line: 20px;
+  --type-label-size: 13px;
+  --type-label-line: 18px;
+  --type-caption-size: 12px;
+  --type-caption-line: 18px;
+  --type-micro-size: 11px;
+  --type-micro-line: 16px;
+}
+
+@media (max-width: 599px) {
+  :root {
+    --type-display-lg-size: 36px;
+    --type-display-lg-line: 44px;
+    --type-display-sm-size: 32px;
+    --type-display-sm-line: 40px;
+    --type-heading-1-size: 30px;
+    --type-heading-1-line: 38px;
+    --type-heading-2-size: 24px;
+    --type-heading-2-line: 32px;
+    --type-heading-3-size: 20px;
+    --type-heading-3-line: 28px;
+    --type-body-lg-line: 26px;
+  }
+}

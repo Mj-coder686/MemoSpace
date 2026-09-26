@@ -2,16 +2,18 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { AlarmClock, Archive, CalendarHeart, ImagePlus, Palette, Pencil, Plus, Send, Sparkles, Trash2, X } from 'lucide-vue-next'
+import { AlarmClock, Archive, ArrowLeft, ArrowRight, CalendarHeart, ImagePlus, MapPin, MessageCircle, Palette, Pencil, Plus, Send, Sparkles, Trash2, Users } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import EmptyState from '../components/EmptyState.vue'
 import PrivateMedia from '../components/PrivateMedia.vue'
 import UserAvatar from '../components/UserAvatar.vue'
 import { imageLuminance } from '../utils/appearance'
+import { UiBanner, UiButton, UiCheckbox, UiDialog, UiIconButton, UiInput, UiSkeleton } from '../components/ui'
 
 const route = useRoute(); const router = useRouter(); const id = Number(route.params.id)
 const space = ref<any>({}); const timeline = ref<any[]>([]); const messages = ref<any[]>([]); const events = ref<any[]>([])
 const note = ref(''); const feedback = ref('')
+const loading = ref(true); const loadError = ref(''); const archiveDialog = ref(false); const anniversaryDeleteTarget = ref<any | null>(null)
 const anniversaryModal = ref(false); const savingAnniversary = ref(false); const editingAnniversaryId = ref<number | null>(null)
 const anniversaryForm = ref({ title:'', date:dayjs().format('YYYY-MM-DD'), repeatYearly:true })
 const appearanceModal=ref(false);const appearanceBusy=ref(false);const themes=ref<any[]>([]);const backgroundFile=ref<File|null>(null);const backgroundPreview=ref('');const spaceBackground=ref('')
@@ -32,16 +34,20 @@ const countdown = (day:any) => {
 }
 
 const load = async () => {
-  const [a,b,c,d] = await Promise.all([http.get(`/spaces/${id}`),http.get(`/spaces/${id}/timeline`),http.get(`/spaces/${id}/messages`),http.get(`/spaces/${id}/events`)])
-  space.value=a.data; timeline.value=b.data; messages.value=c.data; events.value=d.data;await loadSpaceBackground()
+  loading.value=true; loadError.value=''
+  try {
+    const [a,b,c,d] = await Promise.all([http.get(`/spaces/${id}`),http.get(`/spaces/${id}/timeline`),http.get(`/spaces/${id}/messages`),http.get(`/spaces/${id}/events`)])
+    space.value=a.data; timeline.value=b.data; messages.value=c.data; events.value=d.data;await loadSpaceBackground()
+  } catch(error) { loadError.value=errorMessage(error) }
+  finally { loading.value=false }
 }
 onMounted(load)
 onBeforeUnmount(()=>{if(spaceBackground.value)URL.revokeObjectURL(spaceBackground.value);if(backgroundPreview.value)URL.revokeObjectURL(backgroundPreview.value)})
 const loadSpaceBackground=async()=>{if(spaceBackground.value)URL.revokeObjectURL(spaceBackground.value);spaceBackground.value='';if(!space.value.background_file_id)return;try{const{data}=await http.get(`/files/${space.value.background_file_id}/content`,{responseType:'blob'});spaceBackground.value=URL.createObjectURL(data)}catch{feedback.value='共享空间背景暂时无法读取。'}}
-const leave = async () => { if(!note.value.trim())return; await http.post(`/spaces/${id}/messages`,{content:note.value});note.value='';messages.value=(await http.get(`/spaces/${id}/messages`)).data }
+const leave = async () => { if(!note.value.trim())return; try { await http.post(`/spaces/${id}/messages`,{content:note.value});note.value='';messages.value=(await http.get(`/spaces/${id}/messages`)).data } catch(error) { feedback.value=errorMessage(error) } }
 const archive = async () => {
-  if (!space.value.relationship_id || !confirm('封存后将不能继续添加共同记忆，但历史会被保留。确认吗？')) return
-  try { await http.delete(`/relationships/${space.value.relationship_id}`); await load() } catch(e){ feedback.value=errorMessage(e) }
+  if (!space.value.relationship_id) return
+  try { await http.delete(`/relationships/${space.value.relationship_id}`); archiveDialog.value=false; await load() } catch(e){ feedback.value=errorMessage(e) }
 }
 const openAnniversary = (day?:any) => {
   editingAnniversaryId.value = day ? Number(day.id) : null
@@ -62,15 +68,14 @@ const saveAnniversary = async () => {
   finally { savingAnniversary.value=false }
 }
 const removeAnniversary = async (day:any) => {
-  if (!confirm(`确定删除纪念日「${day.title}」吗？共同空间里的记忆不会受影响。`)) return
-  try { await http.delete(`/spaces/${id}/anniversaries/${day.id}`); await load() }
+  try { await http.delete(`/spaces/${id}/anniversaries/${day.id}`); anniversaryDeleteTarget.value=null; await load() }
   catch(e) { feedback.value=errorMessage(e) }
 }
 const createReminder = (day:any) => router.push({ path:'/reminders', query:{
   relationship:String(space.value.relationship_id), title:day.title, kind:'ANNIVERSARY',
   date:dayjs(day.anniversary_date).format('YYYY-MM-DD')
 } })
-const openAppearance=async()=>{if(!themes.value.length)themes.value=(await http.get('/spaces/themes')).data;appearanceForm.value={name:space.value.name||'',themeId:String(space.value.theme_id||''),primaryColor:space.value.primary_color||'#7f879e',backgroundColor:space.value.background_color||'#f7f6f4',textColor:space.value.text_color||'#373a45',backgroundBrightness:Number(space.value.background_brightness||100),backgroundOverlay:Number(space.value.background_overlay??18),clearBackgroundImage:false};backgroundFile.value=null;if(backgroundPreview.value)URL.revokeObjectURL(backgroundPreview.value);backgroundPreview.value='';appearanceModal.value=true}
+const openAppearance=async()=>{try{if(!themes.value.length)themes.value=(await http.get('/spaces/themes')).data;appearanceForm.value={name:space.value.name||'',themeId:String(space.value.theme_id||''),primaryColor:space.value.primary_color||appearanceForm.value.primaryColor,backgroundColor:space.value.background_color||appearanceForm.value.backgroundColor,textColor:space.value.text_color||appearanceForm.value.textColor,backgroundBrightness:Number(space.value.background_brightness||100),backgroundOverlay:Number(space.value.background_overlay??18),clearBackgroundImage:false};backgroundFile.value=null;if(backgroundPreview.value)URL.revokeObjectURL(backgroundPreview.value);backgroundPreview.value='';appearanceModal.value=true}catch(error){feedback.value=errorMessage(error)}}
 const applyPreset=(theme:any)=>{appearanceForm.value.themeId=String(theme.id);appearanceForm.value.primaryColor=theme.primary_color;appearanceForm.value.backgroundColor=theme.background_color;appearanceForm.value.textColor=theme.text_color}
 const chooseSpaceBackground=async(event:Event)=>{const file=(event.target as HTMLInputElement).files?.[0]||null;backgroundFile.value=file;if(backgroundPreview.value)URL.revokeObjectURL(backgroundPreview.value);backgroundPreview.value=file?URL.createObjectURL(file):'';if(file)await autoSpaceBalance(file)}
 const autoSpaceBalance=async(file=backgroundFile.value)=>{if(!file){appearanceForm.value.backgroundBrightness=72;appearanceForm.value.backgroundOverlay=24;appearanceForm.value.textColor='#fffaf5';return}try{const light=await imageLuminance(file);appearanceForm.value.backgroundBrightness=light>.68?50:light>.45?70:light>.25?90:108;appearanceForm.value.backgroundOverlay=light>.55?30:light>.3?20:10;appearanceForm.value.textColor=light>.22?'#fffaf5':'#f8f4ef'}catch{feedback.value='无法自动分析图片，请手动调节亮度。'}}
@@ -79,77 +84,78 @@ const saveAppearance=async()=>{appearanceBusy.value=true;feedback.value='';try{l
 </script>
 
 <template>
-  <div :style="style">
-    <section class="space-hero" :class="{archived:space.status==='ARCHIVED','has-background':spaceBackground}">
-      <span class="eyebrow">{{ space.status==='ARCHIVED' ? 'A STORY SAFELY ARCHIVED' : space.space_type==='PERSONAL' ? 'MY PRIVATE UNIVERSE' : 'OUR SHARED DAYS' }}</span>
-      <h1>{{ space.name }}</h1>
-      <p v-if="space.status==='ARCHIVED'">此空间已于 {{ dayjs(space.archived_at).format('YYYY-MM-DD') }} 封存，历史记忆仍然被好好保存。</p>
-      <p v-else-if="space.space_type==='RELATIONSHIP'">我们已经一起记录了 {{ days }} 天，每一次回望都有迹可循。</p>
-      <p v-else>你的私人数字档案，只有你可以决定谁能走进这里。</p>
-      <div class="space-stats"><div><b>{{ space.memoryCount || 0 }}</b><small>共同记忆</small></div><div><b>{{ space.photoCount || 0 }}</b><small>照片故事</small></div><div><b>{{ space.placeCount || 0 }}</b><small>一起去过</small></div></div>
-      <button v-if="space.status==='ACTIVE'" class="space-appearance-button" @click="openAppearance"><Palette :size="16" /> 自定义空间</button>
+  <div v-if="loading" class="space-detail-loading" aria-label="正在打开记忆空间"><UiSkeleton height="320px" radius="var(--radius-lg)" /><div><UiSkeleton height="520px" radius="var(--radius-lg)" /><UiSkeleton height="300px" radius="var(--radius-lg)" /></div></div>
+  <EmptyState v-else-if="loadError" kind="error" title="这个空间暂时无法打开" :text="loadError" action-label="重新加载" @action="load" />
+  <main v-else class="space-detail-page" :style="style">
+    <router-link class="relationship-back-link" to="/spaces"><ArrowLeft :size="16" />返回记忆空间</router-link>
+    <section class="space-detail-hero" :class="{ 'is-archived': space.status==='ARCHIVED', 'has-background': spaceBackground }">
+      <div class="space-detail-hero__copy"><span class="memory-kicker">{{ space.status==='ARCHIVED' ? 'A STORY SAFELY ARCHIVED' : space.space_type==='PERSONAL' ? 'MY PRIVATE ARCHIVE' : 'OUR SHARED DAYS' }}</span><h1>{{ space.name }}</h1><p v-if="space.status==='ARCHIVED'">此空间已于 {{ dayjs(space.archived_at).format('YYYY-MM-DD') }} 封存，历史记忆仍然被好好保存。</p><p v-else-if="space.space_type==='RELATIONSHIP'">我们已经一起记录了 {{ days }} 天，每一次回望都有迹可循。</p><p v-else>你的私人数字档案，只有你可以决定谁能走进这里。</p></div>
+      <dl class="space-detail-stats"><div><dt>{{ space.memoryCount || 0 }}</dt><dd>{{ space.space_type==='RELATIONSHIP' ? '共同记忆' : '私人记忆' }}</dd></div><div><dt>{{ space.photoCount || 0 }}</dt><dd>照片故事</dd></div><div><dt>{{ space.placeCount || 0 }}</dt><dd>记录地点</dd></div></dl>
+      <UiButton v-if="space.status==='ACTIVE'" variant="secondary" class="space-detail-appearance" @click="openAppearance"><Palette :size="16" />自定义空间</UiButton>
     </section>
 
-    <div class="two-column">
-      <section>
-        <div class="section-heading"><div><span class="eyebrow">MEMORY TIMELINE</span><h2>我们的时间轴</h2></div></div>
-        <div v-if="timeline.length" class="timeline">
-          <article v-for="item in timeline" :key="item.id" class="timeline-item">
-            <div class="timeline-date">{{ dayjs(item.occurred_at).format('YYYY · MMMM · DD') }}</div>
-            <router-link :to="`/memory/${item.id}`" class="timeline-card">
-              <PrivateMedia v-if="item.cover_file_id" class="timeline-cover" :file-id="item.cover_file_id" :mime-type="item.cover_mime_type" :alt="item.title" preview />
-              <h3>{{ item.title }}</h3><p>{{ item.content || '一段安静的记录' }}</p>
+    <UiBanner v-if="space.status==='ARCHIVED'" tone="warning" title="这是一个只读的历史空间" description="关系已经结束，但空间、Memory 与图片没有删除。" />
+    <UiBanner v-if="feedback" tone="danger" title="操作没有完成" :description="feedback"><template #actions><UiButton variant="ghost" size="sm" @click="feedback=''">知道了</UiButton></template></UiBanner>
+
+    <div class="space-detail-layout">
+      <section class="space-detail-timeline" aria-labelledby="space-timeline-title">
+        <div class="relationship-section-heading"><div><span class="memory-kicker">MEMORY TIMELINE</span><h2 id="space-timeline-title">{{ space.space_type==='RELATIONSHIP' ? '我们的时间轴' : '我的时间轴' }}</h2><p>按照真实发生的时间，慢慢向前翻阅。</p></div></div>
+        <div v-if="timeline.length" class="space-timeline-list">
+          <article v-for="item in timeline" :key="item.id" class="space-timeline-entry">
+            <time :datetime="item.occurred_at">{{ dayjs(item.occurred_at).format('YYYY · MM · DD') }}</time>
+            <router-link :to="`/memory/${item.id}`">
+              <PrivateMedia v-if="item.cover_file_id" class="space-timeline-cover" :file-id="item.cover_file_id" :mime-type="item.cover_mime_type" :alt="item.title" preview />
+              <span><small>{{ item.memory_type || 'MEMORY' }}</small><strong>{{ item.title }}</strong><p>{{ item.content || '一段安静的记录' }}</p></span>
+              <ArrowRight :size="18" />
             </router-link>
           </article>
         </div>
         <EmptyState v-else title="这里还没有属于你们的故事" text="从第一张照片、第一句话或第一次旅行开始吧。" />
       </section>
-      <aside style="display:grid;gap:18px">
-        <section class="panel"><span class="eyebrow">PEOPLE HERE</span><h2 style="font-size:19px">空间成员</h2><div class="space-members"><UserAvatar v-for="member in space.members" :key="member.id" :src="member.avatar" :name="member.nickname" :title="member.nickname" /></div></section>
-        <section v-if="space.space_type==='RELATIONSHIP'" class="panel anniversary-panel">
-          <div class="anniversary-heading"><div><span class="eyebrow">ANNIVERSARIES</span><h2><CalendarHeart :size="18" /> 重要的日子</h2></div><button v-if="space.status==='ACTIVE'" class="icon-button" aria-label="添加纪念日" @click="openAnniversary()"><Plus :size="17" /></button></div>
-          <div v-if="space.anniversaries?.length" class="anniversary-list">
-            <article v-for="day in space.anniversaries" :key="day.id" class="anniversary-item">
-              <div class="anniversary-date"><b>{{ dayjs(day.anniversary_date).format('DD') }}</b><span>{{ dayjs(day.anniversary_date).format('MM 月') }}</span></div>
-              <div class="anniversary-copy"><b>{{ day.title }}</b><p>{{ day.repeat_yearly ? '每年纪念' : dayjs(day.anniversary_date).format('YYYY 年') }} · {{ countdown(day) }}</p></div>
-              <div v-if="space.status==='ACTIVE'" class="anniversary-actions">
-                <button title="创建年度提醒" @click="createReminder(day)"><AlarmClock :size="15" /></button>
-                <button title="编辑纪念日" @click="openAnniversary(day)"><Pencil :size="15" /></button>
-                <button title="删除纪念日" @click="removeAnniversary(day)"><Trash2 :size="15" /></button>
-              </div>
+      <aside class="space-detail-rail">
+        <section class="space-rail-section"><div class="space-rail-heading"><span><Users :size="17" /></span><div><small>PEOPLE HERE</small><h2>空间成员</h2></div></div><div class="space-member-list"><div v-for="member in space.members" :key="member.id"><UserAvatar :src="member.avatar" :name="member.nickname" /><span><strong>{{ member.nickname }}</strong><small>空间成员</small></span></div></div></section>
+
+        <section v-if="space.space_type==='RELATIONSHIP'" class="space-rail-section">
+          <div class="space-rail-heading"><span><CalendarHeart :size="17" /></span><div><small>ANNIVERSARIES</small><h2>重要的日子</h2></div><UiIconButton v-if="space.status==='ACTIVE'" label="添加纪念日" size="sm" variant="tonal" @click="openAnniversary()"><Plus :size="17" /></UiIconButton></div>
+          <div v-if="space.anniversaries?.length" class="space-anniversary-list">
+            <article v-for="day in space.anniversaries" :key="day.id">
+              <time :datetime="day.anniversary_date"><b>{{ dayjs(day.anniversary_date).format('DD') }}</b><span>{{ dayjs(day.anniversary_date).format('MM 月') }}</span></time>
+              <div><strong>{{ day.title }}</strong><p>{{ day.repeat_yearly ? '每年纪念' : dayjs(day.anniversary_date).format('YYYY 年') }} · {{ countdown(day) }}</p></div>
+              <div v-if="space.status==='ACTIVE'" class="space-anniversary-actions"><UiIconButton label="创建年度提醒" size="sm" variant="ghost" @click="createReminder(day)"><AlarmClock :size="15" /></UiIconButton><UiIconButton label="编辑纪念日" size="sm" variant="ghost" @click="openAnniversary(day)"><Pencil :size="15" /></UiIconButton><UiIconButton label="删除纪念日" size="sm" variant="ghost" @click="anniversaryDeleteTarget=day"><Trash2 :size="15" /></UiIconButton></div>
             </article>
           </div>
-          <p v-else class="anniversary-empty">还没有重要日期。第一次见面、生日或某个约定，都可以从这里记住。</p>
+          <p v-else class="space-rail-empty">还没有重要日期。第一次见面、生日或某个约定，都可以从这里记住。</p>
         </section>
-        <section v-if="events.length" class="panel"><span class="eyebrow">SHARED EVENTS</span><h2 style="font-size:19px">共同事件</h2><router-link v-for="event in events" :key="event.id" :to="`/event/${event.id}`" class="message-note" style="display:block"><b>{{ event.name }}</b><p>{{ dayjs(event.start_at).format('YYYY.MM.DD') }} · {{ event.location || '共同故事' }}</p></router-link></section>
-        <section class="panel"><span class="eyebrow">MESSAGE WALL</span><h2 style="font-size:19px">空间留言</h2><div class="message-list"><div v-for="item in messages.slice(0,5)" :key="item.id" class="message-note"><b>{{ item.nickname }} · {{ dayjs(item.created_at).format('MM.DD') }}</b><p>{{ item.content }}</p></div></div><div v-if="space.status==='ACTIVE'" style="display:flex;gap:7px;margin-top:13px"><input v-model="note" style="min-width:0;flex:1;padding:10px;border:1px solid var(--line);border-radius:12px" placeholder="留一句话…" @keyup.enter="leave" /><button class="icon-button" @click="leave"><Send :size="16" /></button></div></section>
-        <button v-if="space.relationship_id && space.status==='ACTIVE'" class="button ghost" @click="archive"><Archive :size="15" /> 封存这段关系</button><p v-if="feedback" class="form-error">{{ feedback }}</p>
+
+        <section v-if="events.length" class="space-rail-section"><div class="space-rail-heading"><span><MapPin :size="17" /></span><div><small>SHARED EVENTS</small><h2>共同事件</h2></div></div><div class="space-event-list"><router-link v-for="event in events" :key="event.id" :to="`/event/${event.id}`"><span><strong>{{ event.name }}</strong><small>{{ dayjs(event.start_at).format('YYYY.MM.DD') }} · {{ event.location || '共同故事' }}</small></span><ArrowRight :size="15" /></router-link></div></section>
+
+        <section class="space-rail-section"><div class="space-rail-heading"><span><MessageCircle :size="17" /></span><div><small>MESSAGE WALL</small><h2>空间留言</h2></div></div><div v-if="messages.length" class="space-message-list"><article v-for="item in messages.slice(0,5)" :key="item.id"><strong>{{ item.nickname }}<time :datetime="item.created_at">{{ dayjs(item.created_at).format('MM.DD') }}</time></strong><p>{{ item.content }}</p></article></div><p v-else class="space-rail-empty">还没有留言，写下第一句话吧。</p><div v-if="space.status==='ACTIVE'" class="space-message-compose"><label class="sr-only" for="space-note">空间留言</label><input id="space-note" v-model="note" maxlength="500" placeholder="留一句话…" @keyup.enter="leave" /><UiIconButton label="发送留言" variant="tonal" :disabled="!note.trim()" @click="leave"><Send :size="16" /></UiIconButton></div></section>
+
+        <UiButton v-if="space.relationship_id && space.status==='ACTIVE'" variant="danger" block @click="archiveDialog=true"><Archive :size="15" />解除关系并封存空间</UiButton>
       </aside>
     </div>
 
-    <div v-if="anniversaryModal" class="modal-backdrop" @click.self="anniversaryModal=false">
-      <section class="create-modal anniversary-modal" role="dialog" aria-modal="true" aria-labelledby="anniversary-title">
-        <header><div><span class="eyebrow">A DATE WE KEEP</span><h2 id="anniversary-title">{{ editingAnniversaryId ? '编辑纪念日' : '添加纪念日' }}</h2></div><button class="icon-button" aria-label="关闭" @click="anniversaryModal=false"><X :size="18" /></button></header>
-        <label class="field"><span>名称</span><input v-model="anniversaryForm.title" maxlength="100" placeholder="例如：我们第一次见面的日子" /></label>
-        <label class="field"><span>日期</span><input v-model="anniversaryForm.date" type="date" /></label>
-        <label class="anniversary-repeat"><input v-model="anniversaryForm.repeatYearly" type="checkbox" /><span><b>每年纪念</b><small>可一键创建年度提醒，以后每年自动出现</small></span></label>
-        <footer><button class="button" @click="anniversaryModal=false">取消</button><button class="button primary" :disabled="savingAnniversary || !anniversaryForm.title.trim() || !anniversaryForm.date" @click="saveAnniversary">{{ savingAnniversary ? '正在保存…' : '保存纪念日' }}</button></footer>
-      </section>
-    </div>
+    <UiDialog :open="anniversaryModal" :title="editingAnniversaryId ? '编辑纪念日' : '添加纪念日'" description="第一次见面、生日或某个约定，都可以在这里被记住。" :busy="savingAnniversary" @close="anniversaryModal=false">
+      <div class="space-anniversary-form"><UiInput v-model="anniversaryForm.title" label="名称" :maxlength="100" placeholder="例如：我们第一次见面的日子" required /><UiInput v-model="anniversaryForm.date" label="日期" type="date" required /><UiCheckbox v-model="anniversaryForm.repeatYearly" label="每年纪念" description="之后可以一键创建年度提醒" /></div>
+      <template #actions><UiButton variant="ghost" :disabled="savingAnniversary" @click="anniversaryModal=false">取消</UiButton><UiButton variant="primary" :loading="savingAnniversary" loading-text="正在保存" :disabled="!anniversaryForm.title.trim() || !anniversaryForm.date" @click="saveAnniversary">保存纪念日</UiButton></template>
+    </UiDialog>
 
-    <div v-if="appearanceModal" class="modal-backdrop" @click.self="appearanceModal=false">
-      <section class="create-modal space-appearance-modal" role="dialog" aria-modal="true" aria-labelledby="space-appearance-title">
-        <header><div><span class="eyebrow">OUR OWN ATMOSPHERE</span><h2 id="space-appearance-title">自定义共享空间</h2></div><button class="icon-button" aria-label="关闭" @click="appearanceModal=false"><X :size="18" /></button></header>
-        <label class="field"><span>空间名称</span><input v-model="appearanceForm.name" maxlength="80" /></label>
+    <UiDialog :open="Boolean(anniversaryDeleteTarget)" title="删除这个纪念日？" :description="anniversaryDeleteTarget ? `「${anniversaryDeleteTarget.title}」会从日期列表中移除，但共同空间里的 Memory 不受影响。` : ''" @close="anniversaryDeleteTarget=null"><template #actions><UiButton variant="ghost" @click="anniversaryDeleteTarget=null">保留</UiButton><UiButton variant="danger" @click="removeAnniversary(anniversaryDeleteTarget)">确认删除</UiButton></template></UiDialog>
+
+    <UiDialog :open="archiveDialog" title="解除关系并封存空间？" description="封存后不能继续添加共同记忆，但已有空间、图片、留言和时间轴都会保留。" @close="archiveDialog=false"><template #actions><UiButton variant="ghost" @click="archiveDialog=false">暂不封存</UiButton><UiButton variant="danger" @click="archive">确认解除并封存</UiButton></template></UiDialog>
+
+    <UiDialog :open="appearanceModal" title="自定义记忆空间" description="选择一套气氛，也可以上传属于你们的图片并调整可读性。" width="wide" compact-fullscreen :busy="appearanceBusy" @close="appearanceModal=false">
+      <div class="space-appearance-form">
+        <UiInput v-model="appearanceForm.name" label="空间名称" :maxlength="80" required />
         <div class="space-theme-presets"><button v-for="theme in themes" :key="theme.id" :class="{active:String(theme.id)===appearanceForm.themeId}" :style="{background:`linear-gradient(135deg,${theme.background_color},${theme.primary_color})`}" @click="applyPreset(theme)"><span>{{theme.preset_name}}</span></button></div>
         <div class="space-color-grid"><label><span>主题色</span><input v-model="appearanceForm.primaryColor" type="color" /></label><label><span>背景色</span><input v-model="appearanceForm.backgroundColor" type="color" /></label><label><span>文字色</span><input v-model="appearanceForm.textColor" type="color" /></label></div>
         <div class="space-bg-preview" :style="{backgroundColor:appearanceForm.backgroundColor,color:appearanceForm.textColor}"><img v-if="backgroundPreview" :src="backgroundPreview" alt="背景预览" :style="{filter:`brightness(${appearanceForm.backgroundBrightness}%)`} "/><PrivateMedia v-else-if="space.background_file_id&&!appearanceForm.clearBackgroundImage" :file-id="Number(space.background_file_id)" mime-type="image/*" alt="当前空间背景" preview /><i :style="{opacity:appearanceForm.backgroundOverlay/100}"></i><b>我们的共享空间</b></div>
         <div class="space-range-grid"><label><span>图片亮度 <b>{{appearanceForm.backgroundBrightness}}%</b></span><input v-model.number="appearanceForm.backgroundBrightness" type="range" min="25" max="130" /></label><label><span>暗色遮罩 <b>{{appearanceForm.backgroundOverlay}}%</b></span><input v-model.number="appearanceForm.backgroundOverlay" type="range" min="0" max="85" /></label></div>
         <div class="space-bg-actions"><label class="button"><ImagePlus :size="16" />选择背景图<input type="file" accept="image/*" @change="chooseSpaceBackground" /></label><button class="button" @click="autoSpaceBalance()"><Sparkles :size="16" />自动调节亮度</button><button v-if="backgroundPreview||space.background_file_id" class="button" @click="clearSpaceBackground"><Trash2 :size="16" />移除图片</button></div>
-        <footer><button class="button" @click="appearanceModal=false">取消</button><button class="button primary" :disabled="appearanceBusy||!appearanceForm.name.trim()" @click="saveAppearance">{{appearanceBusy?'正在保存…':'应用到共享空间'}}</button></footer>
-      </section>
-    </div>
-  </div>
+      </div>
+      <template #actions><UiButton variant="ghost" :disabled="appearanceBusy" @click="appearanceModal=false">取消</UiButton><UiButton variant="primary" :loading="appearanceBusy" loading-text="正在保存" :disabled="!appearanceForm.name.trim()" @click="saveAppearance">应用到记忆空间</UiButton></template>
+    </UiDialog>
+  </main>
 </template>
 
 <style scoped>

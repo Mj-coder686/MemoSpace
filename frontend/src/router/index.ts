@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
 
 const AuthView = () => import('../views/AuthView.vue')
-const HomeView = () => import('../views/HomeView.vue')
 const MemoriesView = () => import('../views/MemoriesView.vue')
 const MemoryDetailView = () => import('../views/MemoryDetailView.vue')
 const PhotosView = () => import('../views/PhotosView.vue')
@@ -22,10 +22,21 @@ const ChatView = () => import('../views/ChatView.vue')
 const RemindersView = () => import('../views/RemindersView.vue')
 const AdminLoginView = () => import('../views/AdminLoginView.vue')
 const AdminDashboardView = () => import('../views/AdminDashboardView.vue')
+const developmentRoutes = import.meta.env.DEV
+  ? [
+      { path: '/__design-system', component: () => import('../views/DesignSystemPlaygroundView.vue'), meta: { public: true, designSystem: true } },
+      { path: '/__shell', component: () => import('../views/DesignShellPlaygroundView.vue'), meta: { designSystem: true } },
+    ]
+  : []
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    if (to.path === from.path) return false
+    return { top: 0 }
+  },
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/login', component: AuthView, meta: { public: true } },
@@ -50,7 +61,8 @@ const router = createRouter({
     { path: '/explore', component: ExploreView },
     { path: '/notifications', component: NotificationsView },
     { path: '/settings', component: SettingsView },
-    { path: '/user/:id', component: UserView }
+    { path: '/user/:id', component: UserView },
+    ...developmentRoutes
   ]
 })
 
@@ -67,6 +79,7 @@ router.onError((error, to) => {
 router.afterEach(() => sessionStorage.removeItem(chunkRecoveryKey))
 
 router.beforeEach((to) => {
+  if (to.meta.designSystem) return
   if (to.meta.admin) {
     const adminToken = localStorage.getItem('memospace_admin_token')
     if (!to.meta.adminPublic && !adminToken) return '/admin/login'

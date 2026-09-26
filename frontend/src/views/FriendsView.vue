@@ -11,6 +11,8 @@ import { useAuthStore } from '../stores/auth'
 import { useRealtimeStore } from '../stores/realtime'
 import type { RealtimeEvent } from '../stores/realtime'
 import UserAvatar from '../components/UserAvatar.vue'
+import EmptyState from '../components/EmptyState.vue'
+import { UiBanner, UiButton, UiCheckbox, UiDialog, UiIconButton, UiInput, UiSelect, UiSkeleton, UiTextarea } from '../components/ui'
 
 type Friend = {
   friendship_id: number
@@ -63,6 +65,7 @@ const categories = ref<any[]>([])
 const relationFriend = ref<Friend|null>(null)
 const relationForm = ref({ categoryId:'', message:'想和你建立一段共同记录的关系。' })
 const relationBusy = ref(false)
+const destructiveTarget = ref<{ friend: Friend; action: 'remove' | 'block' } | null>(null)
 let unsubscribeRealtime:(()=>void)|undefined
 
 const memoId = computed(() => auth.user?.publicId || auth.user?.public_id || '')
@@ -77,6 +80,7 @@ const requestPerson = (item: FriendRequest) => item.direction === 'INCOMING'
   : { id: item.receiver_id, publicId: item.receiver_public_id, nickname: item.receiver_nickname, avatar: item.receiver_avatar }
 
 const load = async () => {
+  loading.value = true
   pageError.value = ''
   try {
     const [friendResponse, requestResponse, categoryResponse] = await Promise.all([
@@ -188,9 +192,9 @@ const saveSettings = async () => {
 }
 
 const removeFriend = async (friend: Friend) => {
-  if (!window.confirm(`确定删除好友「${displayName(friend)}」吗？关系绑定和共同空间不会因此删除。`)) return
   try {
     await http.delete(`/friends/${friend.friend_id}`)
+    destructiveTarget.value = null
     editingFriend.value = null
     pageMessage.value = '好友已删除；已有关系绑定仍然保留。'
     await load()
@@ -198,9 +202,9 @@ const removeFriend = async (friend: Friend) => {
 }
 
 const blockFriend = async (friend: Friend) => {
-  if (!window.confirm(`拉黑「${displayName(friend)}」后会同时解除好友并停止聊天，是否继续？`)) return
   try {
     await http.post(`/users/${friend.friend_id}/block`)
+    destructiveTarget.value = null
     editingFriend.value = null
     pageMessage.value = '已拉黑并解除好友。关系空间仍作为独立数据保留。'
     await load()
@@ -225,30 +229,30 @@ onBeforeUnmount(()=>unsubscribeRealtime?.())
 </script>
 
 <template>
-  <header class="page-heading friends-heading">
+  <main class="friends-page"><header class="relationship-domain-header friends-heading">
     <div>
-      <span class="eyebrow">FRIENDS & CONVERSATIONS</span>
+      <span class="memory-kicker">FRIENDS & CONVERSATIONS</span>
       <h1>好友中心</h1>
       <p>好友是聊天和日常提醒的基础；关系绑定仍然是独立的共同记忆关系。</p>
     </div>
-    <button class="button" @click="router.push('/relationships')"><Users :size="17" /> 关系分类</button>
+    <UiButton variant="secondary" @click="router.push('/relationships')"><Users :size="17" />关系分类</UiButton>
   </header>
 
-  <p v-if="pageMessage" class="relationship-notice success" role="status">{{ pageMessage }}</p>
-  <p v-if="pageError" class="relationship-notice error" role="alert">{{ pageError }}</p>
+  <UiBanner v-if="pageMessage" tone="success" title="好友资料已更新" :description="pageMessage" />
+  <UiBanner v-if="pageError" tone="danger" title="操作没有完成" :description="pageError" />
 
   <section class="memo-id-card" aria-label="我的 Memo ID">
     <div>
-      <span class="eyebrow">MY MEMO ID</span>
+      <span class="memory-kicker">MY MEMO ID</span>
       <strong>{{ memoId || '正在获取…' }}</strong>
       <p>这是系统自动分配且不会变化的 12 位数字代号，分享它就能让朋友找到你。</p>
     </div>
-    <button class="button" :disabled="!memoId" @click="copyMemoId"><Copy :size="16" /> 复制 ID</button>
+    <UiButton variant="tonal" :disabled="!memoId" @click="copyMemoId"><Copy :size="16" />复制 ID</UiButton>
   </section>
 
   <div class="friend-workbench">
-    <section class="panel friend-add-panel">
-      <span class="eyebrow">FIND A FRIEND</span>
+    <section class="friend-add-panel">
+      <span class="memory-kicker">FIND A FRIEND</span>
       <h2>添加好友</h2>
       <p>支持完整或部分 Memo ID，也可以输入昵称、用户名；数字 ID 不会因为昵称改变而变化。</p>
       <form class="memo-id-search" @submit.prevent="searchUsers">
@@ -269,9 +273,9 @@ onBeforeUnmount(()=>unsubscribeRealtime?.())
       </div>
     </section>
 
-    <section class="panel request-panel">
+    <section class="request-panel">
       <div class="friend-panel-title">
-        <div><span class="eyebrow">REQUESTS</span><h2>好友申请</h2></div>
+        <div><span class="memory-kicker">REQUESTS</span><h2>好友申请</h2></div>
         <span v-if="pendingIncoming.length" class="request-count">{{ pendingIncoming.length }}</span>
       </div>
       <div class="request-tabs" role="tablist">
@@ -299,7 +303,7 @@ onBeforeUnmount(()=>unsubscribeRealtime?.())
 
   <section>
     <div class="section-heading">
-      <div><span class="eyebrow">MY FRIENDS</span><h2>我的好友</h2></div>
+      <div><span class="memory-kicker">MY FRIENDS</span><h2>我的好友</h2></div>
       <span class="section-help">{{ friends.length }} 位好友 · {{ realtime.connected ? '实时连接正常' : '正在连接实时服务' }}</span>
     </div>
     <div v-if="friends.length" class="friend-grid">
@@ -307,46 +311,26 @@ onBeforeUnmount(()=>unsubscribeRealtime?.())
         <div class="friend-card-head">
           <UserAvatar class="friend-avatar large" :src="friend.avatar" :name="displayName(friend)" />
           <i :class="{ online: realtime.isOnline(friend.friend_id) }" :title="realtime.isOnline(friend.friend_id) ? '在线' : '离线'" />
-          <button class="friend-settings-button" :aria-label="`设置${displayName(friend)}`" @click="openSettings(friend)"><Settings2 :size="17" /></button>
         </div>
-        <h3>{{ displayName(friend) }}</h3>
-        <p v-if="friend.remark_name" class="original-name">昵称：{{ friend.nickname }}</p>
-        <p class="friend-memo-id">Memo ID {{ friend.public_id }}</p>
-        <p class="friend-bio">{{ friend.bio || '还没有写个人签名。' }}</p>
-        <div class="friend-permissions">
-          <span :class="{ enabled: truthy(friend.allow_direct_reminders) }"><BellRing v-if="truthy(friend.allow_direct_reminders)" :size="13" /><BellOff v-else :size="13" />好友提醒</span>
-          <span v-if="truthy(friend.mute_chat)">聊天已静音</span>
-        </div>
-        <div class="friend-card-actions"><button class="button" @click="openRelationship(friend)"><HeartHandshake :size="16" /> 申请关系</button><button class="button primary" @click="router.push(`/chat/${friend.friend_id}`)"><MessageCircle :size="17" /> 聊天</button></div>
+        <div class="friend-card-copy"><h3>{{ displayName(friend) }}</h3><p v-if="friend.remark_name" class="original-name">昵称：{{ friend.nickname }}</p><p class="friend-memo-id">Memo ID {{ friend.public_id }}</p><p class="friend-bio">{{ friend.bio || '还没有写个人签名。' }}</p></div>
+        <div class="friend-permissions"><span :class="{ enabled: truthy(friend.allow_direct_reminders) }"><BellRing v-if="truthy(friend.allow_direct_reminders)" :size="13" /><BellOff v-else :size="13" />好友提醒</span><span v-if="truthy(friend.mute_chat)">聊天已静音</span></div>
+        <div class="friend-card-actions"><UiButton variant="ghost" size="sm" @click="openRelationship(friend)"><HeartHandshake :size="16" />申请关系</UiButton><UiButton variant="primary" size="sm" @click="router.push(`/chat/${friend.friend_id}`)"><MessageCircle :size="17" />聊天</UiButton><UiIconButton :label="`设置${displayName(friend)}`" size="sm" variant="ghost" @click="openSettings(friend)"><Settings2 :size="17" /></UiIconButton></div>
       </article>
     </div>
-    <div v-else-if="!loading" class="empty-state"><span><Users :size="23" /></span><h3>好友列表还是空的</h3><p>使用上方的 12 位 Memo ID 找到重要的人。</p></div>
+    <div v-if="loading" class="friend-list-loading"><UiSkeleton v-for="index in 3" :key="index" height="96px" radius="var(--radius-md)" /></div>
+    <EmptyState v-else-if="!friends.length" title="好友列表还是空的" text="使用上方的 Memo ID、昵称或用户名找到重要的人。" />
   </section>
 
-  <div v-if="editingFriend" class="modal-backdrop" @click.self="editingFriend = null">
-    <section class="create-modal friend-settings-modal" role="dialog" aria-modal="true" aria-labelledby="friend-setting-title">
-      <header><div><span class="eyebrow">FRIEND SETTINGS</span><h2 id="friend-setting-title">{{ displayName(editingFriend) }}</h2></div><button class="icon-button" aria-label="关闭" @click="editingFriend = null"><X :size="18" /></button></header>
-      <label class="field"><span>仅自己可见的好友备注</span><input v-model="settingForm.remarkName" maxlength="60" placeholder="留空则显示对方昵称" /></label>
-      <label class="setting-toggle"><span><b>允许对方直接创建提醒</b><small>关闭后，对方发来的提醒需要你确认。</small></span><input v-model="settingForm.allowDirectReminders" type="checkbox" /></label>
-      <label class="setting-toggle"><span><b>聊天静音</b><small>保留消息，但不突出显示聊天通知。</small></span><input v-model="settingForm.muteChat" type="checkbox" /></label>
-      <footer class="friend-setting-footer">
-        <div><button class="danger-link" @click="removeFriend(editingFriend)"><UserMinus :size="15" /> 删除好友</button><button class="danger-link" @click="blockFriend(editingFriend)"><ShieldBan :size="15" /> 拉黑</button></div>
-        <button class="button primary" :disabled="savingSettings" @click="saveSettings">{{ savingSettings ? '保存中…' : '保存设置' }}</button>
-      </footer>
-    </section>
-  </div>
+  <UiDialog :open="Boolean(editingFriend)" :title="editingFriend ? displayName(editingFriend) : '好友设置'" description="这些设置只影响好友联系，不会更改已有关系或共同空间。" :busy="savingSettings" @close="editingFriend=null">
+    <div v-if="editingFriend" class="friend-settings-form"><UiInput v-model="settingForm.remarkName" label="仅自己可见的好友备注" :maxlength="60" placeholder="留空则显示对方昵称" /><UiCheckbox v-model="settingForm.allowDirectReminders" label="允许对方直接创建提醒" description="关闭后，对方发来的提醒需要你确认。" /><UiCheckbox v-model="settingForm.muteChat" label="聊天静音" description="保留消息，但不突出显示聊天通知。" /><div class="friend-danger-actions"><UiButton variant="ghost" size="sm" @click="destructiveTarget={ friend: editingFriend, action: 'remove' }"><UserMinus :size="15" />删除好友</UiButton><UiButton variant="ghost" size="sm" @click="destructiveTarget={ friend: editingFriend, action: 'block' }"><ShieldBan :size="15" />拉黑</UiButton></div></div>
+    <template #actions><UiButton variant="ghost" :disabled="savingSettings" @click="editingFriend=null">取消</UiButton><UiButton variant="primary" :loading="savingSettings" loading-text="保存中" @click="saveSettings">保存设置</UiButton></template>
+  </UiDialog>
 
-  <div v-if="relationFriend" class="modal-backdrop" @click.self="relationFriend=null">
-    <section class="create-modal friend-settings-modal" role="dialog" aria-modal="true" aria-labelledby="relationship-request-title">
-      <header><div><span class="eyebrow">RELATIONSHIP REQUEST</span><h2 id="relationship-request-title">和 {{displayName(relationFriend)}} 建立关系</h2></div><button class="icon-button" aria-label="关闭" @click="relationFriend=null"><X :size="18" /></button></header>
-      <p class="relationship-helper">好友和关系是两层独立连接。对方接受后，你们会拥有唯一的共同空间。</p>
-      <label class="field"><span>关系分类</span><select v-model="relationForm.categoryId"><option value="">请选择</option><option v-for="category in categories" :key="category.id" :value="String(category.id)">{{category.icon}} {{category.name}}</option></select></label>
-      <label class="field"><span>申请留言</span><textarea v-model="relationForm.message" maxlength="200" rows="3"></textarea></label>
-      <footer><button class="button" @click="relationFriend=null">取消</button><button class="button primary" :disabled="relationBusy||!relationForm.categoryId" @click="sendRelationship">{{relationBusy?'正在发送…':'发送关系申请'}}</button></footer>
-    </section>
-  </div>
+  <UiDialog :open="Boolean(relationFriend)" :title="relationFriend ? `和 ${displayName(relationFriend)} 建立关系` : '建立关系'" description="好友和关系是两层独立连接；对方接受后，你们会拥有唯一的共同空间。" :busy="relationBusy" @close="relationFriend=null">
+    <div class="friend-relationship-form"><UiSelect v-model="relationForm.categoryId" label="关系分类" required><option value="">请选择</option><option v-for="category in categories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></UiSelect><UiTextarea v-model="relationForm.message" label="申请留言" :maxlength="200" :rows="3" /></div>
+    <template #actions><UiButton variant="ghost" :disabled="relationBusy" @click="relationFriend=null">取消</UiButton><UiButton variant="primary" :loading="relationBusy" loading-text="正在发送" :disabled="!relationForm.categoryId" @click="sendRelationship">发送关系申请</UiButton></template>
+  </UiDialog>
+
+  <UiDialog :open="Boolean(destructiveTarget)" :title="destructiveTarget?.action === 'block' ? '拉黑这位好友？' : '删除这位好友？'" :description="destructiveTarget?.action === 'block' ? '拉黑会同时解除好友并停止聊天；已有关系空间仍作为独立数据保留。' : '删除好友只会断开联系；已有关系绑定和共同空间不会因此删除。'" @close="destructiveTarget=null"><template #actions><UiButton variant="ghost" @click="destructiveTarget=null">取消</UiButton><UiButton variant="danger" @click="destructiveTarget?.action === 'block' ? blockFriend(destructiveTarget.friend) : destructiveTarget && removeFriend(destructiveTarget.friend)">{{ destructiveTarget?.action === 'block' ? '确认拉黑' : '确认删除好友' }}</UiButton></template></UiDialog>
+  </main>
 </template>
-
-<style scoped>
-.friend-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.friend-card-actions .button{padding:0 10px;display:flex;align-items:center;justify-content:center;gap:5px}.relationship-helper{margin:-4px 0 16px;color:var(--muted);font-size:12px;line-height:1.7}@media(max-width:420px){.friend-card-actions{grid-template-columns:1fr}}
-</style>

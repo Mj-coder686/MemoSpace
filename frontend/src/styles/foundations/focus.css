@@ -1,0 +1,40 @@
+.skip-link {
+  position: fixed;
+  z-index: var(--z-critical);
+  top: var(--space-3);
+  left: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-inverse);
+  background: var(--color-surface-inverse);
+  border-radius: var(--radius-md);
+  transform: translateY(calc(-100% - var(--space-8)));
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: var(--border-focus) solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+:where(input, textarea, select):focus-visible {
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-instant: 1ms;
+    --motion-fast: 1ms;
+    --motion-base: 1ms;
+    --motion-slow: 1ms;
+    --motion-emphasis: 1ms;
+    --motion-decorative: 1ms;
+    --motion-slower: 1ms;
+  }
+
+  html { scroll-behavior: auto; }
+  .icon-button,.button,.memory-card { transition-duration: 1ms; }
+}

@@ -1,0 +1,121 @@
+:root {
+  /* Color primitives */
+  --color-stone-0: #ffffff;
+  --color-stone-25: #fffcf8;
+  --color-stone-50: #faf7f2;
+  --color-stone-100: #f3eee7;
+  --color-stone-200: #e7ded4;
+  --color-stone-300: #d3c7bb;
+  --color-stone-400: #aa9e94;
+  --color-stone-500: #7d736c;
+  --color-stone-600: #625a55;
+  --color-stone-700: #49433f;
+  --color-stone-800: #322f2d;
+  --color-stone-900: #22201f;
+  --color-stone-950: #171615;
+
+  --color-brand-50: #f3f1f7;
+  --color-brand-100: #e8e4ef;
+  --color-brand-200: #d2ccdf;
+  --color-brand-300: #b5adc9;
+  --color-brand-400: #9187aa;
+  --color-brand-500: #716784;
+  --color-brand-600: #5b536d;
+  --color-brand-700: #494357;
+  --color-brand-800: #373341;
+  --color-brand-900: #282530;
+
+  --color-rose-50: #fbf3f4;
+  --color-rose-100: #f4e2e5;
+  --color-rose-200: #e8c7cd;
+  --color-rose-300: #d4a2ab;
+  --color-rose-400: #b87984;
+  --color-rose-500: #995a66;
+  --color-rose-600: #7e4853;
+  --color-rose-700: #653a44;
+  --color-rose-800: #4c2c34;
+
+  --color-sage-50: #f2f6f2;
+  --color-sage-100: #e2ebe3;
+  --color-sage-200: #c7d8c9;
+  --color-sage-300: #a4bda8;
+  --color-sage-400: #7e9c83;
+  --color-sage-500: #617b66;
+  --color-sage-600: #4d6552;
+  --color-sage-700: #3d5042;
+  --color-sage-800: #303f34;
+
+  /* 4pt spacing scale */
+  --space-0: 0;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Shape and borders */
+  --radius-none: 0;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-full: 999px;
+  --border-hairline: 1px;
+  --border-emphasis: 2px;
+  --border-focus: 3px;
+
+  /* Controls */
+  --control-xs: 28px;
+  --control-sm: 36px;
+  --control-md: 44px;
+  --control-lg: 52px;
+  --touch-target-min: 40px;
+  --touch-target-android: 48px;
+
+  /* Containers */
+  --container-reading: 720px;
+  --container-content: 1120px;
+  --container-wide: 1280px;
+  --container-admin: 1440px;
+  --sidebar-web: 240px;
+  --aside-detail: 320px;
+
+  /* Breakpoint values for JavaScript/documentation parity. */
+  --breakpoint-xs: 360px;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 840px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1440px;
+
+  /* Layer system */
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-navigation: 200;
+  --z-dropdown: 300;
+  --z-fab: 350;
+  --z-scrim: 400;
+  --z-sheet: 500;
+  --z-modal: 600;
+  --z-toast: 700;
+  --z-critical: 800;
+
+  /* Native environment */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --keyboard-offset: 0px;
+}

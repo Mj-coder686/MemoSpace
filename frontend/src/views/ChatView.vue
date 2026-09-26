@@ -7,6 +7,7 @@ import http, { errorMessage } from '../api/http'
 import UserAvatar from '../components/UserAvatar.vue'
 import { useAuthStore } from '../stores/auth'
 import { type RealtimeEvent, useRealtimeStore } from '../stores/realtime'
+import { UiBanner, UiButton, UiIconButton, UiSkeleton } from '../components/ui'
 
 type Message = {
   id: number
@@ -155,6 +156,18 @@ const sendMessage = async () => {
   }
 }
 
+const retryMessage = async (message: Message) => {
+  message.pending = true
+  message.failed = false
+  pageError.value = ''
+  if (!realtime.send('CHAT_SEND', { friendId: friendId.value, content: message.content, clientMessageId: message.clientMessageId })) {
+    message.pending = false
+    message.failed = true
+    pageError.value = '实时连接尚未恢复，这条消息仍保留在本机。'
+    realtime.connect()
+  }
+}
+
 const handleComposerKey = (event: KeyboardEvent) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
@@ -176,32 +189,33 @@ onBeforeUnmount(() => unsubscribe?.())
 <template>
   <section class="chat-page" aria-label="好友聊天">
     <header class="chat-header">
-      <button class="icon-button" aria-label="返回好友中心" @click="router.push('/friends')"><ArrowLeft :size="19" /></button>
+      <UiIconButton label="返回好友中心" variant="ghost" @click="router.push('/friends')"><ArrowLeft :size="19" /></UiIconButton>
       <UserAvatar class="friend-avatar" :src="friend?.avatar" :name="displayName" />
       <div class="chat-person">
         <h1>{{ displayName }}</h1>
         <span><i :class="{ online: realtime.isOnline(friendId) }" />{{ realtime.isOnline(friendId) ? '在线' : '离线，消息会保留' }}<template v-if="friend?.public_id"> · Memo ID {{ friend.public_id }}</template></span>
       </div>
       <div class="chat-header-actions">
-        <button class="button" @click="router.push({ path: '/reminders', query: { recipient: friendId } })"><BellPlus :size="16" /> 创建提醒</button>
-        <button class="button" @click="router.push({ path: '/relationships', query: { inviteUser: friendId, inviteName: displayName } })"><Users :size="16" /> 绑定关系</button>
-        <button class="icon-button" aria-label="好友设置" @click="router.push('/friends')"><Settings2 :size="18" /></button>
+        <UiButton variant="ghost" size="sm" @click="router.push({ path: '/reminders', query: { recipient: friendId } })"><BellPlus :size="16" />创建提醒</UiButton>
+        <UiButton variant="ghost" size="sm" @click="router.push({ path: '/relationships', query: { inviteUser: friendId, inviteName: displayName } })"><Users :size="16" />绑定关系</UiButton>
+        <UiIconButton label="好友设置" size="sm" variant="ghost" @click="router.push('/friends')"><Settings2 :size="18" /></UiIconButton>
       </div>
     </header>
 
-    <p v-if="pageError" class="relationship-notice error chat-error" role="alert">{{ pageError }}</p>
+    <UiBanner v-if="!realtime.connected && friend" tone="warning" title="实时连接正在恢复" description="已收到的历史消息仍可阅读；未成功发送的内容会明确保留在当前对话中。"><template #actions><UiButton variant="ghost" size="sm" @click="realtime.connect()">重新连接</UiButton></template></UiBanner>
+    <UiBanner v-if="pageError" tone="danger" title="聊天操作没有完成" :description="pageError" />
     <div ref="messageArea" class="chat-messages" aria-live="polite">
       <button v-if="hasMore" class="load-older" :disabled="loadingOlder" @click="loadMessages(true)">{{ loadingOlder ? '读取中…' : '查看更早的消息' }}</button>
-      <div v-if="loading" class="chat-empty">正在打开对话…</div>
+      <div v-if="loading" class="chat-loading"><UiSkeleton v-for="index in 4" :key="index" :width="index % 2 ? '62%' : '48%'" height="58px" radius="var(--radius-md)" /></div>
       <div v-else-if="!messages.length" class="chat-empty"><MessageCircle :size="30" /><h2>从一句问候开始</h2><p>消息会保存到共享数据库，换一台设备登录后仍能继续阅读。</p></div>
       <article v-for="message in messages" :key="`${message.id}-${message.clientMessageId}`" class="chat-message" :class="{ mine: isMine(message), failed: message.failed }">
-        <div class="chat-bubble"><p>{{ message.content }}</p><small>{{ dayjs(message.sentAt).format('HH:mm') }}<template v-if="message.pending"> · 发送中</template><template v-else-if="message.failed"> · 发送失败</template><CheckCheck v-else-if="isMine(message) && message.readAt" :size="13" /></small></div>
+        <div class="chat-bubble"><p>{{ message.content }}</p><small>{{ dayjs(message.sentAt).format('HH:mm') }}<template v-if="message.pending"> · 发送中</template><template v-else-if="message.failed"> · 发送失败</template><CheckCheck v-else-if="isMine(message) && message.readAt" :size="13" /></small><button v-if="message.failed" type="button" @click="retryMessage(message)">重新发送</button></div>
       </article>
     </div>
 
     <form class="chat-composer" @submit.prevent="sendMessage">
       <textarea v-model="content" maxlength="1000" rows="1" aria-label="聊天消息" placeholder="写下想说的话，Enter 发送，Shift + Enter 换行" @keydown="handleComposerKey" />
-      <button type="submit" :disabled="!content.trim() || !friend"><Send :size="19" /><span>发送</span></button>
+      <button type="submit" aria-label="发送消息" :disabled="!content.trim() || !friend"><Send :size="19" /><span>发送</span></button>
     </form>
   </section>
 </template>

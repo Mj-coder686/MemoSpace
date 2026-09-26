@@ -1,0 +1,116 @@
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --color-bg-canvas: #181716;
+  --color-bg-subtle: #211f1e;
+  --color-surface-default: #272523;
+  --color-surface-raised: #302d2b;
+  --color-surface-inverse: #f8f3ed;
+  --color-text-primary: #f5f0ea;
+  --color-text-secondary: #c9c0b8;
+  --color-text-tertiary: #a69c94;
+  --color-text-disabled: #746c67;
+  --color-text-inverse: #25211f;
+  --color-text-link: #c8c0d8;
+  --color-border-subtle: rgb(255 255 255 / 10%);
+  --color-border-default: rgb(255 255 255 / 18%);
+  --color-border-strong: rgb(255 255 255 / 32%);
+  --color-focus-ring: var(--color-brand-300);
+  --color-action-primary: #b8afcb;
+  --color-action-primary-hover: #cac3da;
+  --color-action-primary-pressed: #a69cbe;
+  --color-action-primary-soft: rgb(184 175 203 / 16%);
+  --color-accent-emotional: #d99da8;
+  --color-selection: rgb(217 157 168 / 18%);
+  --color-scrim: rgb(0 0 0 / 68%);
+
+  --color-success-fg: #9cc9a8;
+  --color-success-bg: #23342a;
+  --color-success-border: #466b52;
+  --color-warning-fg: #e5c48c;
+  --color-warning-bg: #3a3020;
+  --color-warning-border: #715b35;
+  --color-danger-fg: #efb0bb;
+  --color-danger-bg: #3b252a;
+  --color-danger-border: #76424d;
+  --color-info-fg: #a9ccd8;
+  --color-info-bg: #223139;
+  --color-info-border: #496b78;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 18%);
+  --shadow-sm: 0 4px 14px rgb(0 0 0 / 24%);
+  --shadow-md: 0 12px 32px rgb(0 0 0 / 30%);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 42%);
+
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --paper: var(--color-bg-canvas);
+  --surface: color-mix(in srgb, var(--color-surface-default) 94%, transparent);
+  --surface-solid: var(--color-surface-default);
+  --line: var(--color-border-subtle);
+  --control-line: var(--color-border-default);
+  --accent: var(--color-brand-300);
+  --accent-deep: var(--color-action-primary);
+  --rose: var(--color-accent-emotional);
+  --sage: var(--color-sage-300);
+  --danger: var(--color-danger-fg);
+  --focus: var(--color-focus-ring);
+  --shadow: var(--shadow-md);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) {
+    color-scheme: dark;
+    --color-bg-canvas: #181716;
+    --color-bg-subtle: #211f1e;
+    --color-surface-default: #272523;
+    --color-surface-raised: #302d2b;
+    --color-surface-inverse: #f8f3ed;
+    --color-text-primary: #f5f0ea;
+    --color-text-secondary: #c9c0b8;
+    --color-text-tertiary: #a69c94;
+    --color-text-disabled: #746c67;
+    --color-text-inverse: #25211f;
+    --color-text-link: #c8c0d8;
+    --color-border-subtle: rgb(255 255 255 / 10%);
+    --color-border-default: rgb(255 255 255 / 18%);
+    --color-border-strong: rgb(255 255 255 / 32%);
+    --color-focus-ring: var(--color-brand-300);
+    --color-action-primary: #b8afcb;
+    --color-action-primary-hover: #cac3da;
+    --color-action-primary-pressed: #a69cbe;
+    --color-action-primary-soft: rgb(184 175 203 / 16%);
+    --color-accent-emotional: #d99da8;
+    --color-selection: rgb(217 157 168 / 18%);
+    --color-scrim: rgb(0 0 0 / 68%);
+    --color-success-fg: #9cc9a8;
+    --color-success-bg: #23342a;
+    --color-success-border: #466b52;
+    --color-warning-fg: #e5c48c;
+    --color-warning-bg: #3a3020;
+    --color-warning-border: #715b35;
+    --color-danger-fg: #efb0bb;
+    --color-danger-bg: #3b252a;
+    --color-danger-border: #76424d;
+    --color-info-fg: #a9ccd8;
+    --color-info-bg: #223139;
+    --color-info-border: #496b78;
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 18%);
+    --shadow-sm: 0 4px 14px rgb(0 0 0 / 24%);
+    --shadow-md: 0 12px 32px rgb(0 0 0 / 30%);
+    --shadow-lg: 0 24px 60px rgb(0 0 0 / 42%);
+    --ink: var(--color-text-primary);
+    --muted: var(--color-text-secondary);
+    --paper: var(--color-bg-canvas);
+    --surface: color-mix(in srgb, var(--color-surface-default) 94%, transparent);
+    --surface-solid: var(--color-surface-default);
+    --line: var(--color-border-subtle);
+    --control-line: var(--color-border-default);
+    --accent: var(--color-brand-300);
+    --accent-deep: var(--color-action-primary);
+    --rose: var(--color-accent-emotional);
+    --sage: var(--color-sage-300);
+    --danger: var(--color-danger-fg);
+    --focus: var(--color-focus-ring);
+    --shadow: var(--shadow-md);
+  }
+}

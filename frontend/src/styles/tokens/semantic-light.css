@@ -1,0 +1,63 @@
+:root,
+:root[data-mode="light"] {
+  color-scheme: light;
+  --color-bg-canvas: var(--color-stone-50);
+  --color-bg-subtle: var(--color-stone-100);
+  --color-surface-default: var(--color-stone-25);
+  --color-surface-raised: var(--color-stone-0);
+  --color-surface-inverse: var(--color-stone-900);
+  --color-text-primary: var(--color-stone-900);
+  --color-text-secondary: var(--color-stone-600);
+  --color-text-tertiary: var(--color-stone-600);
+  --color-text-disabled: var(--color-stone-400);
+  --color-text-inverse: var(--color-stone-25);
+  --color-text-link: var(--color-brand-700);
+  --color-border-subtle: var(--color-stone-200);
+  --color-border-default: var(--color-stone-300);
+  --color-border-strong: var(--color-stone-500);
+  --color-focus-ring: var(--color-brand-500);
+  --color-action-primary: var(--color-brand-700);
+  --color-action-primary-hover: var(--color-brand-800);
+  --color-action-primary-pressed: var(--color-brand-900);
+  --color-action-primary-soft: var(--color-brand-100);
+  --color-accent-emotional: var(--color-rose-600);
+  --color-selection: var(--color-rose-100);
+  --color-scrim: rgb(23 22 21 / 52%);
+
+  --color-success-fg: #356447;
+  --color-success-bg: #eaf4ed;
+  --color-success-border: #b9d8c1;
+  --color-warning-fg: #805b22;
+  --color-warning-bg: #fbf1de;
+  --color-warning-border: #e8cd98;
+  --color-danger-fg: #8a3947;
+  --color-danger-bg: #fbeaec;
+  --color-danger-border: #e8b8c0;
+  --color-info-fg: #3e6171;
+  --color-info-bg: #eaf2f5;
+  --color-info-border: #bcd3dc;
+
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px rgb(31 27 24 / 6%);
+  --shadow-sm: 0 4px 14px rgb(31 27 24 / 8%);
+  --shadow-md: 0 12px 32px rgb(31 27 24 / 10%);
+  --shadow-lg: 0 24px 60px rgb(31 27 24 / 16%);
+  --shadow-focus: 0 0 0 3px rgb(113 103 132 / 28%);
+
+  /* Legacy compatibility aliases. New components use semantic names above. */
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --paper: var(--color-bg-canvas);
+  --surface: color-mix(in srgb, var(--color-surface-default) 94%, transparent);
+  --surface-solid: var(--color-surface-default);
+  --line: var(--color-border-subtle);
+  --control-line: var(--color-border-default);
+  --accent: var(--color-brand-600);
+  --accent-deep: var(--color-action-primary);
+  --rose: var(--color-accent-emotional);
+  --sage: var(--color-sage-500);
+  --danger: var(--color-danger-fg);
+  --focus: var(--color-focus-ring);
+  --shadow: var(--shadow-md);
+  --radius: var(--radius-lg);
+}

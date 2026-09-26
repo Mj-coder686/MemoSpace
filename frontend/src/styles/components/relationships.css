@@ -1,0 +1,443 @@
+.relationship-domain-header {
+  padding-block: var(--space-10) var(--space-7);
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.relationship-domain-header h1 {
+  margin: var(--space-2) 0;
+  font-family: var(--font-display);
+  font-size: var(--type-heading-1-size);
+  line-height: var(--type-heading-1-line);
+}
+
+.relationship-domain-header p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: var(--type-body-md-line);
+}
+
+.relationship-domain-header > div:last-child:not(:first-child) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.relationship-boundary-note {
+  margin-bottom: var(--space-7);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--color-surface-default);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.relationship-boundary-note > div {
+  min-width: 0;
+  padding: var(--space-4) var(--space-5);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.relationship-boundary-note > div + div { border-left: var(--border-hairline) solid var(--color-border-subtle); }
+.relationship-boundary-note > div > svg { color: var(--color-text-link); }
+.relationship-boundary-note span { display: grid; gap: var(--space-0-5); }
+.relationship-boundary-note small { color: var(--color-text-secondary); font-size: var(--type-caption-size); line-height: var(--type-caption-line); }
+.relationship-boundary-note a { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-link); font-size: var(--type-body-sm-size); font-weight: 700; white-space: nowrap; }
+
+.relationship-categories-page > .ui-banner { margin-bottom: var(--space-5); }
+.relationship-category-section { padding-block: var(--space-4) var(--space-8); }
+.relationship-section-heading { margin-bottom: var(--space-4); display: flex; align-items: end; justify-content: space-between; gap: var(--space-6); }
+.relationship-section-heading h2 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--type-heading-2-size); }
+.relationship-section-heading p { margin: 0; color: var(--color-text-secondary); font-size: var(--type-body-sm-size); }
+
+.relationship-category-list,
+.relationship-category-loading {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.relationship-category-list > article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid color-mix(in srgb, var(--category-accent) 36%, var(--color-border-subtle));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--category-accent) 45%, transparent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.relationship-category-main {
+  min-width: 0;
+  min-height: 108px;
+  padding: var(--space-4) var(--space-5);
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  color: inherit;
+}
+
+.relationship-category-main:hover { background: var(--color-bg-subtle); }
+.relationship-category-icon { width: 52px; height: 52px; display: grid; place-items: center; color: var(--category-accent, var(--color-text-link)); background: var(--category-background, var(--color-action-primary-soft)); border-radius: var(--radius-md); }
+.relationship-category-main > span:nth-child(2) { min-width: 0; display: grid; gap: var(--space-0-5); }
+.relationship-category-main small { color: var(--color-text-tertiary); font-size: var(--type-micro-size); letter-spacing: .08em; text-transform: uppercase; }
+.relationship-category-main strong { font-family: var(--font-display); font-size: var(--type-heading-3-size); }
+.relationship-category-main > span > span { color: var(--color-text-secondary); font-size: var(--type-body-sm-size); }
+
+.relationship-category-actions {
+  padding-inline: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-left: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.relationship-hidden-categories {
+  margin-bottom: var(--space-12);
+  background: var(--color-surface-default);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.relationship-hidden-categories summary {
+  min-height: 64px;
+  padding: var(--space-3) var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+}
+
+.relationship-hidden-categories summary::-webkit-details-marker { display: none; }
+.relationship-hidden-categories summary > span { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--space-1) var(--space-3); }
+.relationship-hidden-categories summary > span svg { grid-row: 1 / 3; color: var(--color-text-tertiary); }
+.relationship-hidden-categories summary small { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+.relationship-hidden-categories[open] summary > svg { transform: rotate(180deg); }
+.relationship-hidden-categories > div { padding: 0 var(--space-3) var(--space-3); display: grid; gap: var(--space-2); }
+.relationship-hidden-categories article { min-height: 64px; padding: var(--space-2) var(--space-3); display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: var(--space-3); background: var(--color-bg-subtle); border-radius: var(--radius-sm); }
+.relationship-category-icon.is-quiet { width: 42px; height: 42px; color: var(--color-text-tertiary); background: var(--color-surface-default); }
+.relationship-hidden-categories article > span:nth-child(2) { display: grid; gap: var(--space-0-5); }
+.relationship-hidden-categories article small { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+
+.relationship-invite-flow {
+  display: grid;
+  gap: var(--space-7);
+}
+
+.relationship-invite-flow > section { display: grid; gap: var(--space-3); }
+.relationship-invite-flow h3 { margin: 0; display: flex; align-items: baseline; gap: var(--space-2); font-family: var(--font-display); font-size: var(--type-heading-3-size); }
+.relationship-invite-flow h3 span { color: var(--color-text-link); font-family: var(--font-mono); font-size: var(--type-micro-size); }
+.relationship-invite-flow section > p { margin: 0; color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+
+.relationship-people-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.relationship-people-results {
+  display: grid;
+  gap: var(--space-1);
+  background: var(--color-surface-default);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.relationship-people-results button {
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.relationship-people-results button:hover { background: var(--color-bg-subtle); }
+.relationship-people-results .user-avatar,
+.relationship-selected-person .user-avatar { width: 42px; height: 42px; }
+.relationship-people-results button > span,
+.relationship-selected-person > span { min-width: 0; display: grid; gap: var(--space-0-5); }
+.relationship-people-results small,
+.relationship-selected-person small { overflow: hidden; color: var(--color-text-secondary); font-size: var(--type-caption-size); text-overflow: ellipsis; white-space: nowrap; }
+.relationship-search-hint { padding: var(--space-3); color: var(--color-text-secondary); background: var(--color-bg-subtle); border-radius: var(--radius-sm); font-size: var(--type-body-sm-size); }
+
+.relationship-selected-person {
+  padding: var(--space-3);
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-success-bg);
+  border: var(--border-hairline) solid var(--color-success-border);
+  border-radius: var(--radius-md);
+}
+
+.relationship-category-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.relationship-category-choices .ui-choice { padding: var(--space-3); background: var(--color-surface-default); border: var(--border-hairline) solid var(--color-border-subtle); border-radius: var(--radius-md); }
+
+.relationship-create-category { display: grid; gap: var(--space-5); }
+.relationship-create-category fieldset { margin: 0; padding: 0; border: 0; }
+.relationship-create-category legend { margin-bottom: var(--space-2); font-size: var(--type-body-sm-size); font-weight: 650; }
+.relationship-create-category fieldset > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.relationship-create-category fieldset button { min-height: var(--control-lg); display: grid; place-items: center; gap: var(--space-1); color: var(--color-text-secondary); background: var(--color-surface-default); border: var(--border-hairline) solid var(--color-border-default); border-radius: var(--radius-sm); font: inherit; font-size: var(--type-caption-size); }
+.relationship-create-category fieldset button.is-selected { color: var(--color-text-link); background: var(--color-action-primary-soft); border-color: var(--color-action-primary); }
+
+@media (max-width: 839px) {
+  .relationship-domain-header { padding-block: var(--space-6) var(--space-5); align-items: start; flex-direction: column; }
+  .relationship-domain-header > div:last-child:not(:first-child) { width: 100%; }
+  .relationship-domain-header > div:last-child:not(:first-child) .ui-button { flex: 1; }
+  .relationship-boundary-note { grid-template-columns: 1fr; }
+  .relationship-boundary-note > div { grid-template-columns: auto minmax(0,1fr); }
+  .relationship-boundary-note > div + div { border-top: var(--border-hairline) solid var(--color-border-subtle); border-left: 0; }
+  .relationship-boundary-note a { grid-column: 2; }
+  .relationship-section-heading { align-items: start; flex-direction: column; gap: var(--space-1); }
+  .relationship-category-list > article { grid-template-columns: 1fr; }
+  .relationship-category-main { min-height: 88px; padding: var(--space-3); grid-template-columns: 46px minmax(0,1fr) auto; }
+  .relationship-category-icon { width: 46px; height: 46px; }
+  .relationship-category-actions { padding: var(--space-1) var(--space-2); justify-content: flex-end; border-top: var(--border-hairline) solid var(--color-border-subtle); border-left: 0; }
+  .relationship-people-search { grid-template-columns: 1fr; }
+  .relationship-people-search .ui-button { width: 100%; }
+  .relationship-category-choices { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 460px) {
+  .relationship-domain-header > div:last-child:not(:first-child) { align-items: stretch; flex-direction: column-reverse; }
+  .relationship-hidden-categories article { grid-template-columns: 42px minmax(0,1fr); }
+  .relationship-hidden-categories article .ui-button { grid-column: 1 / -1; }
+}
+
+.relationship-back-link {
+  margin-top: var(--space-2);
+  padding-block: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--type-body-sm-size);
+  font-weight: 650;
+}
+
+.relationship-category-detail-loading { padding-block: var(--space-6); display: grid; gap: var(--space-3); }
+
+.relationship-category-hero {
+  margin-block: var(--space-5);
+  min-height: 220px;
+  padding: var(--space-8);
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--category-background) 68%, var(--color-surface-raised));
+  border: var(--border-hairline) solid color-mix(in srgb, var(--category-accent) 32%, var(--color-border-subtle));
+  border-radius: var(--radius-lg);
+}
+
+.relationship-category-hero__icon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-inverse);
+  background: var(--category-accent);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-xs);
+}
+
+.relationship-category-hero h1 { margin: var(--space-2) 0; font-family: var(--font-display); font-size: var(--type-display-sm-size); line-height: var(--type-display-sm-line); }
+.relationship-category-hero p { margin: 0; color: var(--color-text-secondary); }
+.relationship-category-hero > div:last-child { display: grid; gap: var(--space-2); }
+.relationship-category-page > .ui-banner { margin-bottom: var(--space-3); }
+
+.relationship-category-people { padding-block: var(--space-7) var(--space-16); }
+.relationship-person-list { border-top: var(--border-hairline) solid var(--color-border-subtle); }
+.relationship-person-list > article {
+  min-width: 0;
+  padding: var(--space-5) var(--space-2);
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) minmax(260px, 340px);
+  align-items: center;
+  gap: var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.relationship-person-list .user-avatar { width: 52px; height: 52px; }
+.relationship-person-copy { min-width: 0; display: grid; gap: var(--space-1); }
+.relationship-person-copy strong { font-family: var(--font-display); font-size: var(--type-title-lg-size); }
+.relationship-person-copy > span { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+.relationship-person-copy p { max-width: 56ch; margin: var(--space-1) 0 0; overflow: hidden; color: var(--color-text-secondary); font-size: var(--type-body-sm-size); text-overflow: ellipsis; white-space: nowrap; }
+
+.relationship-space-entry {
+  min-width: 0;
+  min-height: 72px;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+  background: var(--color-action-primary-soft);
+  border: var(--border-hairline) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.relationship-space-entry > span { min-width: 0; display: grid; gap: var(--space-0-5); }
+.relationship-space-entry small { color: var(--color-text-secondary); font-size: var(--type-micro-size); letter-spacing: .06em; }
+.relationship-space-entry strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.relationship-space-entry span span { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+.relationship-space-entry.is-unavailable { color: var(--color-text-secondary); background: var(--color-bg-subtle); border-style: dashed; }
+
+@media (max-width: 839px) {
+  .relationship-category-hero { min-height: 0; padding: var(--space-5); grid-template-columns: 56px minmax(0,1fr); gap: var(--space-4); }
+  .relationship-category-hero__icon { width: 56px; height: 56px; }
+  .relationship-category-hero h1 { font-size: var(--type-heading-1-size); line-height: var(--type-heading-1-line); }
+  .relationship-category-hero > div:last-child { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; }
+  .relationship-person-list > article { grid-template-columns: 48px minmax(0,1fr); padding-block: var(--space-4); }
+  .relationship-person-list .user-avatar { width: 48px; height: 48px; }
+  .relationship-space-entry { grid-column: 1 / -1; }
+  .relationship-person-copy p { white-space: normal; }
+}
+
+.relationship-manage-page > .ui-banner { margin-bottom: var(--space-3); }
+.relationship-manage-loading { display: grid; gap: var(--space-3); }
+.relationship-manage-section { padding-bottom: var(--space-10); }
+.relationship-ledger { display: grid; gap: var(--space-4); }
+
+.relationship-ledger-entry {
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.relationship-ledger-person {
+  padding: var(--space-5);
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) minmax(240px, 320px);
+  align-items: center;
+  gap: var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.relationship-ledger-person .user-avatar { width: 52px; height: 52px; }
+.relationship-ledger-person > div { min-width: 0; }
+.relationship-ledger-person h3 { margin: 0 0 var(--space-1); font-family: var(--font-display); font-size: var(--type-heading-3-size); }
+.relationship-ledger-person p { margin: 0; color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+
+.relationship-one-space {
+  min-width: 0;
+  min-height: 68px;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+  background: var(--color-action-primary-soft);
+  border-radius: var(--radius-md);
+}
+
+.relationship-one-space > span { min-width: 0; display: grid; gap: var(--space-0-5); }
+.relationship-one-space small { color: var(--color-text-secondary); font-size: var(--type-micro-size); letter-spacing: .06em; }
+.relationship-one-space strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.relationship-tag-editor {
+  padding: var(--space-5);
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.relationship-tag-copy { display: grid; gap: var(--space-1); }
+.relationship-tag-copy p { margin: 0; color: var(--color-text-secondary); font-size: var(--type-caption-size); line-height: var(--type-caption-line); }
+.relationship-tag-editor fieldset { min-width: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); border: 0; }
+
+.relationship-tag-editor label {
+  min-height: var(--control-md);
+  padding-inline: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-default);
+  border: var(--border-hairline) solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  font-size: var(--type-body-sm-size);
+  cursor: pointer;
+}
+
+.relationship-tag-editor label:has(input:checked) { color: var(--color-text-link); background: var(--color-action-primary-soft); border-color: var(--color-action-primary); }
+.relationship-tag-editor label.is-hidden-category { border-style: dashed; }
+.relationship-tag-editor label small { color: var(--color-text-tertiary); font-size: var(--type-micro-size); }
+.relationship-tag-editor input { width: 16px; height: 16px; margin: 0; accent-color: var(--color-action-primary); }
+
+.relationship-ledger-actions {
+  padding: var(--space-3) var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  background: var(--color-bg-subtle);
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.relationship-ledger-actions p { margin: 0; display: grid; gap: var(--space-0-5); }
+.relationship-ledger-actions p strong { font-size: var(--type-body-sm-size); }
+.relationship-ledger-actions p span { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+
+.relationship-archive { margin-bottom: var(--space-16); background: var(--color-surface-default); border: var(--border-hairline) solid var(--color-border-subtle); border-radius: var(--radius-md); }
+.relationship-archive summary { min-height: 68px; padding: var(--space-3) var(--space-5); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); cursor: pointer; list-style: none; }
+.relationship-archive summary::-webkit-details-marker { display: none; }
+.relationship-archive summary > span:first-child { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--space-0-5) var(--space-3); }
+.relationship-archive summary > span:first-child svg { grid-row: 1 / 3; color: var(--color-text-tertiary); }
+.relationship-archive summary small,
+.relationship-archive summary > span:last-child { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+.relationship-archive > div { padding: 0 var(--space-3) var(--space-3); display: grid; gap: var(--space-1); }
+.relationship-archive article { min-height: 68px; padding: var(--space-2) var(--space-3); display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); background: var(--color-bg-subtle); border-radius: var(--radius-sm); }
+.relationship-archive article .user-avatar { width: 42px; height: 42px; }
+.relationship-archive article > span { min-width: 0; display: grid; gap: var(--space-0-5); }
+.relationship-archive article small { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+.relationship-archive article a { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-link); font-size: var(--type-body-sm-size); font-weight: 650; }
+
+.relationship-archive-confirm { padding: var(--space-3); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: var(--space-3); color: var(--color-text-secondary); background: var(--color-warning-bg); border: var(--border-hairline) solid var(--color-warning-border); border-radius: var(--radius-md); }
+.relationship-archive-confirm svg { color: var(--color-warning-fg); }
+.relationship-archive-confirm p { margin: 0; line-height: var(--type-body-md-line); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 839px) {
+  .relationship-ledger-person { grid-template-columns: 48px minmax(0, 1fr); padding: var(--space-4); }
+  .relationship-ledger-person .user-avatar { width: 48px; height: 48px; }
+  .relationship-one-space { grid-column: 1 / -1; }
+  .relationship-tag-editor { padding: var(--space-4); grid-template-columns: 1fr; gap: var(--space-4); }
+  .relationship-tag-editor .ui-button { width: 100%; }
+  .relationship-ledger-actions { padding: var(--space-4); align-items: stretch; flex-direction: column; }
+  .relationship-ledger-actions .ui-button { width: 100%; }
+}
+
+@media (max-width: 460px) {
+  .relationship-archive summary > span:last-child { display: none; }
+  .relationship-archive article { grid-template-columns: 42px minmax(0, 1fr); }
+  .relationship-archive article a { grid-column: 1 / -1; justify-self: end; }
+}

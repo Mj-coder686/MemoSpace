@@ -1,0 +1,34 @@
+:root {
+  --relationship-lover-seed: #94606a;
+  --relationship-lover-soft: #f5e9eb;
+  --relationship-friend-seed: #557583;
+  --relationship-friend-soft: #e8f0f2;
+  --relationship-bestie-seed: #766582;
+  --relationship-bestie-soft: #efeaf3;
+  --relationship-family-seed: #8a6b43;
+  --relationship-family-soft: #f4eee3;
+  --relationship-custom-seed: #607666;
+  --relationship-custom-soft: #eaf0eb;
+  --relationship-accent: var(--relationship-custom-seed);
+  --relationship-surface: var(--relationship-custom-soft);
+}
+
+[data-relationship-theme="lover"] {
+  --relationship-accent: var(--relationship-lover-seed);
+  --relationship-surface: var(--relationship-lover-soft);
+}
+
+[data-relationship-theme="friend"] {
+  --relationship-accent: var(--relationship-friend-seed);
+  --relationship-surface: var(--relationship-friend-soft);
+}
+
+[data-relationship-theme="bestie"] {
+  --relationship-accent: var(--relationship-bestie-seed);
+  --relationship-surface: var(--relationship-bestie-soft);
+}
+
+[data-relationship-theme="family"] {
+  --relationship-accent: var(--relationship-family-seed);
+  --relationship-surface: var(--relationship-family-soft);
+}
