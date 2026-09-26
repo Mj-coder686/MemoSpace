@@ -1,0 +1,10 @@
+services:
+  backend:
+    environment:
+      CORS_ORIGINS: "http://114.55.175.112,https://memospace.fun,https://localhost,capacitor://localhost"
+
+  frontend:
+    ports:
+      - "${FRONTEND_HTTPS_PORT:-443}:443"
+    volumes:
+      - "${LETSENCRYPT_DIR:-./deploy/letsencrypt}:/etc/letsencrypt:ro"
