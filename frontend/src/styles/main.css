@@ -38,7 +38,11 @@
 .standalone-route-screen { min-height:100vh; }
 .app-shell::before,.app-shell::after { content:'';position:fixed;z-index:-2;inset:0;pointer-events:none; }
 .app-shell::before { background-color:var(--user-background,var(--paper));background-image:var(--user-bg-image,none);background-position:center;background-size:cover;background-attachment:fixed;filter:brightness(var(--user-bg-brightness,100%));transform:scale(1.01); }
-.app-shell::after { z-index:-1;background:rgba(22,21,25,var(--user-bg-overlay,0)); }
+.app-shell::after { z-index:-1;background-color:rgb(22 21 25 / var(--user-bg-overlay,0));background-image:none; }
+:root[data-mode="dark"] .app-shell::after { background-image:linear-gradient(rgb(10 9 9 / 72%),rgb(10 9 9 / 72%)); }
+@media (prefers-color-scheme:dark) {
+  :root:not([data-mode="light"]) .app-shell::after { background-image:linear-gradient(rgb(10 9 9 / 72%),rgb(10 9 9 / 72%)); }
+}
 .icon-button { width: var(--control-md); height: var(--control-md); display: grid; place-items: center; padding: 0; border: 1px solid var(--control-line); border-radius: 14px; color: var(--ink); background: var(--surface-solid); transition: transform .18s ease, border-color .18s ease, background .18s ease; }
 .icon-button:hover { transform: translateY(-1px); border-color: color-mix(in srgb,var(--accent) 48%,transparent); background: color-mix(in srgb,var(--surface-solid) 92%,var(--accent)); }
 .icon-button:active:not(:disabled) { transform: scale(.96); }

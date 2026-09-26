@@ -22,7 +22,7 @@
 .space-detail-hero::after { content: ''; position: absolute; width: 270px; height: 270px; top: -120px; right: -70px; background: var(--space-primary); border-radius: 50%; opacity: .1; pointer-events: none; }
 .space-detail-hero.has-background::before { content: ''; position: absolute; inset: 0; background-image: var(--space-image); background-position: center; background-size: cover; filter: brightness(var(--space-brightness, 100%)); transform: scale(1.01); }
 .space-detail-hero.has-background::after { inset: 0; width: auto; height: auto; background: linear-gradient(90deg, color-mix(in srgb, #171316 66%, transparent), color-mix(in srgb, #171316 30%, transparent)); border-radius: 0; opacity: 1; }
-.space-detail-hero.has-background { color: var(--color-text-inverse); border-color: transparent; }
+.space-detail-hero.has-background { color: var(--color-text-on-custom-accent); border-color: transparent; }
 .space-detail-hero.is-archived { filter: saturate(.55); }
 .space-detail-hero__copy,
 .space-detail-stats,
@@ -72,7 +72,7 @@
 .space-event-list,
 .space-message-list { display: grid; gap: var(--space-2); }
 .space-anniversary-list article { min-height: 64px; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); }
-.space-anniversary-list time { width: 48px; height: 48px; display: grid; place-content: center; color: var(--color-text-inverse); background: var(--space-primary); border-radius: var(--radius-sm); text-align: center; }
+.space-anniversary-list time { width: 48px; height: 48px; display: grid; place-content: center; color: var(--color-text-on-custom-accent); background: var(--space-primary); border-radius: var(--radius-sm); text-align: center; }
 .space-anniversary-list time b { font-size: var(--type-title-lg-size); line-height: 1; }
 .space-anniversary-list time span { margin-top: var(--space-0-5); font-size: var(--type-micro-size); }
 .space-anniversary-list article > div:nth-child(2) { min-width: 0; }
@@ -97,6 +97,18 @@
 .space-appearance-form .space-theme-presets,
 .space-appearance-form .space-color-grid,
 .space-appearance-form .space-range-grid { margin: 0; }
+
+:root[data-mode="dark"] .space-detail-hero:not(.has-background) {
+  background: color-mix(in srgb, var(--space-background) 12%, var(--color-surface-raised));
+  border-color: color-mix(in srgb, var(--space-primary) 42%, var(--color-border-default));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) .space-detail-hero:not(.has-background) {
+    background: color-mix(in srgb, var(--space-background) 12%, var(--color-surface-raised));
+    border-color: color-mix(in srgb, var(--space-primary) 42%, var(--color-border-default));
+  }
+}
 
 @media (max-width: 960px) {
   .space-detail-loading > div,

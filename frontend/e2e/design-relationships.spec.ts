@@ -138,7 +138,12 @@ const routeRelationships = async (page: Page) => {
       return route.fulfill({ json: { id: 91, status: 'PENDING', categoryName: '恋人', willReuseSpace: false } })
     }
     if (url.pathname === '/api/notifications') return route.fulfill({ json: [] })
-    if (url.pathname.includes('/users/me/appearance')) return route.fulfill({ json: {} })
+    if (url.pathname.includes('/users/me/appearance')) return route.fulfill({ json: {
+      background_color: '#f4efe7',
+      background_file_id: null,
+      background_brightness: 100,
+      background_overlay: 0,
+    } })
     return route.fulfill({ json: [] })
   })
   return { invitationBodies, visibilityBodies, relationshipCategoryBodies, archivedRelationshipIds, anniversaryBodies }
@@ -294,4 +299,21 @@ test('compact relationship flow fits the viewport and has no blocking accessibil
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
   const blocking = results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
   expect(blocking, blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n')).toEqual([])
+})
+
+test('system dark mode keeps custom light backgrounds and space themes readable', async ({ page }) => {
+  await seedSession(page)
+  await routeRelationships(page)
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' })
+
+  for (const path of ['/spaces', '/relationships/category/1', '/space/71']) {
+    await page.goto(path)
+    await expect(page.locator('#main-content')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toContain('dark')
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.app-shell')!, '::after').backgroundImage)).not.toBe('none')
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+    const contrast = results.violations.filter((violation) => violation.id === 'color-contrast')
+    expect(contrast, contrast.flatMap((violation) => violation.nodes.map((node) => node.failureSummary || node.html)).join('\n')).toEqual([])
+  }
 })

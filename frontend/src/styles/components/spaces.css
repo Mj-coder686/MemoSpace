@@ -34,7 +34,7 @@
   border-radius: var(--radius-lg);
 }
 
-.spaces-entry-mark { width: 52px; height: 52px; display: grid; place-items: center; color: var(--color-text-inverse); background: var(--space-accent, var(--color-action-primary)); border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-xs); }
+.spaces-entry-mark { width: 52px; height: 52px; display: grid; place-items: center; color: var(--color-text-on-custom-accent); background: var(--space-accent, var(--color-action-primary)); border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-xs); }
 .spaces-personal-entry > .spaces-entry-mark { width: 64px; height: 64px; }
 .spaces-personal-copy,
 .spaces-shared-copy { min-width: 0; display: grid; gap: var(--space-1); }
@@ -78,6 +78,18 @@
 .spaces-archive .spaces-entry-mark { width: 42px; height: 42px; color: var(--color-text-tertiary); background: var(--color-surface-default); }
 .spaces-archive a > span:nth-child(2) { min-width: 0; display: grid; gap: var(--space-0-5); }
 .spaces-archive a small { color: var(--color-text-secondary); font-size: var(--type-caption-size); }
+
+:root[data-mode="dark"] .spaces-personal-entry {
+  background: color-mix(in srgb, var(--space-wash) 12%, var(--color-surface-raised));
+  border-color: color-mix(in srgb, var(--space-accent) 38%, var(--color-border-default));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) .spaces-personal-entry {
+    background: color-mix(in srgb, var(--space-wash) 12%, var(--color-surface-raised));
+    border-color: color-mix(in srgb, var(--space-accent) 38%, var(--color-border-default));
+  }
+}
 
 @media (max-width: 960px) {
   .spaces-index-header { grid-template-columns: 1fr; gap: var(--space-5); }

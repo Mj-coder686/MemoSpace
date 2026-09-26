@@ -10,6 +10,7 @@
   --color-text-tertiary: #a69c94;
   --color-text-disabled: #746c67;
   --color-text-inverse: #25211f;
+  --color-text-on-custom-accent: #ffffff;
   --color-text-link: #c8c0d8;
   --color-border-subtle: rgb(255 255 255 / 10%);
   --color-border-default: rgb(255 255 255 / 18%);
@@ -70,6 +71,7 @@
     --color-text-tertiary: #a69c94;
     --color-text-disabled: #746c67;
     --color-text-inverse: #25211f;
+    --color-text-on-custom-accent: #ffffff;
     --color-text-link: #c8c0d8;
     --color-border-subtle: rgb(255 255 255 / 10%);
     --color-border-default: rgb(255 255 255 / 18%);

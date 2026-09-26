@@ -11,6 +11,7 @@
   --color-text-tertiary: var(--color-stone-600);
   --color-text-disabled: var(--color-stone-400);
   --color-text-inverse: var(--color-stone-25);
+  --color-text-on-custom-accent: var(--color-stone-0);
   --color-text-link: var(--color-brand-700);
   --color-border-subtle: var(--color-stone-200);
   --color-border-default: var(--color-stone-300);

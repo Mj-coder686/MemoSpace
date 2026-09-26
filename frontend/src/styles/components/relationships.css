@@ -258,7 +258,7 @@
   height: 72px;
   display: grid;
   place-items: center;
-  color: var(--color-text-inverse);
+  color: var(--color-text-on-custom-accent);
   background: var(--category-accent);
   border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-xs);
 }
@@ -267,6 +267,18 @@
 .relationship-category-hero p { margin: 0; color: var(--color-text-secondary); }
 .relationship-category-hero > div:last-child { display: grid; gap: var(--space-2); }
 .relationship-category-page > .ui-banner { margin-bottom: var(--space-3); }
+
+:root[data-mode="dark"] .relationship-category-hero {
+  background: color-mix(in srgb, var(--category-background) 12%, var(--color-surface-raised));
+  border-color: color-mix(in srgb, var(--category-accent) 42%, var(--color-border-default));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) .relationship-category-hero {
+    background: color-mix(in srgb, var(--category-background) 12%, var(--color-surface-raised));
+    border-color: color-mix(in srgb, var(--category-accent) 42%, var(--color-border-default));
+  }
+}
 
 .relationship-category-people { padding-block: var(--space-7) var(--space-16); }
 .relationship-person-list { border-top: var(--border-hairline) solid var(--color-border-subtle); }
