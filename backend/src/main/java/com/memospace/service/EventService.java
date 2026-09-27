@@ -37,8 +37,8 @@ public class EventService {
     public List<Map<String, Object>> list(long userId, long spaceId) {
         permission.requireSpaceAccess(userId, spaceId);
         return jdbc.queryForList("SELECT e.id,e.name,e.description,e.start_at,e.end_at,e.location,e.cover_url,u.nickname AS creator_nickname," +
-                "(SELECT COUNT(*) FROM event_memory em WHERE em.event_id=e.id) AS memory_count FROM `event` e JOIN user_account u ON u.id=e.creator_id " +
-                "WHERE e.space_id=? ORDER BY e.start_at DESC", spaceId);
+                "(SELECT COUNT(*) FROM event_memory em JOIN memory m ON m.id=em.memory_id WHERE em.event_id=e.id AND m.deleted_at IS NULL) AS memory_count " +
+                "FROM `event` e JOIN user_account u ON u.id=e.creator_id WHERE e.space_id=? ORDER BY e.start_at DESC", spaceId);
     }
 
     public Map<String, Object> detail(long userId, long eventId) {
@@ -48,7 +48,12 @@ public class EventService {
         long spaceId = ((Number) rows.get(0).get("space_id")).longValue();
         permission.requireSpaceAccess(userId, spaceId);
         Map<String, Object> result = new LinkedHashMap<>(rows.get(0));
-        result.put("memories", jdbc.queryForList("SELECT m.id,m.title,m.content,m.memory_type,m.occurred_at,m.location FROM event_memory em JOIN memory m ON m.id=em.memory_id WHERE em.event_id=? ORDER BY m.occurred_at", eventId));
+        result.put("memories", jdbc.queryForList("SELECT m.id,m.title,m.content,m.memory_type,m.occurred_at,m.location FROM event_memory em " +
+                        "JOIN memory m ON m.id=em.memory_id WHERE em.event_id=? AND m.deleted_at IS NULL AND " +
+                        "(m.creator_id=? OR m.visibility='PUBLIC' OR " +
+                        "(m.visibility='CUSTOM' AND EXISTS(SELECT 1 FROM memory_custom_viewer cv WHERE cv.memory_id=m.id AND cv.user_id=?)) OR " +
+                        "(m.visibility='RELATIONSHIP' AND EXISTS(SELECT 1 FROM memory_space ms JOIN space_member sm ON sm.space_id=ms.space_id WHERE ms.memory_id=m.id AND sm.user_id=?))) " +
+                        "ORDER BY m.occurred_at", eventId, userId, userId, userId));
         return result;
     }
 }

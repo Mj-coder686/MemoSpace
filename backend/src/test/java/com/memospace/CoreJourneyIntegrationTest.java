@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CoreJourneyIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
+    @Autowired JdbcTemplate jdbc;
 
     @Test
     void completeRelationshipMemoryAndArchiveJourney() throws Exception {
@@ -64,6 +66,31 @@ class CoreJourneyIntegrationTest {
         String feed = mvc.perform(get("/api/feed").header("Authorization", bearer(bobToken)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertTrue(feed.contains("第一段共同记忆"));
+
+        mvc.perform(put("/api/memories/{id}", memoryId).header("Authorization", bearer(bobToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("visibility", "PRIVATE"))))
+                .andExpect(status().isForbidden());
+        mvc.perform(put("/api/memories/{id}", memoryId).header("Authorization", bearer(aliceToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("visibility", "PRIVATE"))))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/memories/{id}", memoryId).header("Authorization", bearer(bobToken)))
+                .andExpect(status().isForbidden());
+        String privateTimeline = mvc.perform(get("/api/spaces/{id}/timeline", spaceId).header("Authorization", bearer(bobToken)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertFalse(privateTimeline.contains("第一段共同记忆"));
+        String hiddenFeed = mvc.perform(get("/api/feed").header("Authorization", bearer(bobToken)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertFalse(hiddenFeed.contains("第一段共同记忆"));
+
+        mvc.perform(put("/api/memories/{id}", memoryId).header("Authorization", bearer(aliceToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(
+                                Map.of("visibility", "RELATIONSHIP", "spaceIds", List.of(spaceId)))))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/memories/{id}", memoryId).header("Authorization", bearer(bobToken)))
+                .andExpect(status().isOk());
+        String relationshipTimeline = mvc.perform(get("/api/spaces/{id}/timeline", spaceId).header("Authorization", bearer(bobToken)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(relationshipTimeline.contains("第一段共同记忆"));
 
         mvc.perform(delete("/api/relationships/{id}", relationshipId).header("Authorization", bearer(aliceToken)))
                 .andExpect(status().isOk());
@@ -104,6 +131,7 @@ class CoreJourneyIntegrationTest {
 
         mvc.perform(delete("/api/memories/{id}", memoryId).header("Authorization", bearer(ownerToken)))
                 .andExpect(status().isOk());
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM memory WHERE id=? AND deleted_at IS NOT NULL", Integer.class, memoryId));
         mvc.perform(get("/api/memories/{id}", memoryId).header("Authorization", bearer(ownerToken)))
                 .andExpect(status().isForbidden());
         String feed = mvc.perform(get("/api/feed").header("Authorization", bearer(viewerToken)))

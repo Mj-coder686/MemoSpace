@@ -122,6 +122,32 @@ public class FileStorageService {
         return load(ownerId, fileId);
     }
 
+    public List<StoredObject> objectsForMemory(long memoryId) {
+        return jdbc.query("SELECT DISTINCT fr.id,fr.object_key FROM memory_media mm " +
+                        "JOIN file_record fr ON fr.object_key=mm.object_key WHERE mm.memory_id=?",
+                (rs, rowNum) -> new StoredObject(rs.getLong("id"), rs.getString("object_key")), memoryId);
+    }
+
+    public void deleteIfUnreferenced(StoredObject object) {
+        String contentPath = "/api/files/" + object.fileId() + "/content";
+        Integer references = jdbc.queryForObject("SELECT " +
+                        "(SELECT COUNT(*) FROM memory_media WHERE object_key=?) + " +
+                        "(SELECT COUNT(*) FROM reminder WHERE image_file_id=?) + " +
+                        "(SELECT COUNT(*) FROM user_appearance WHERE background_file_id=?) + " +
+                        "(SELECT COUNT(*) FROM space WHERE background_file_id=?) + " +
+                        "(SELECT COUNT(*) FROM user_account WHERE avatar=?)",
+                Integer.class, object.objectKey(), object.fileId(), object.fileId(), object.fileId(), contentPath);
+        if (references != null && references > 0) return;
+        if (jdbc.update("DELETE FROM file_record WHERE id=? AND object_key=?", object.fileId(), object.objectKey()) == 0) return;
+        try {
+            if ("minio".equalsIgnoreCase(mode)) {
+                minio.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(object.objectKey()).build());
+            } else Files.deleteIfExists(safeLocalPath(object.objectKey()));
+        } catch (Exception ignored) {
+            // The database is already clean. A failed object deletion leaves only a harmless storage orphan.
+        }
+    }
+
     private void putLocal(String key, byte[] bytes) throws Exception {
         Path target = safeLocalPath(key);
         Files.createDirectories(target.getParent());
@@ -163,4 +189,5 @@ public class FileStorageService {
     }
 
     public record StoredFile(Resource resource, String mimeType, String filename, long size) {}
+    public record StoredObject(long fileId, String objectKey) {}
 }

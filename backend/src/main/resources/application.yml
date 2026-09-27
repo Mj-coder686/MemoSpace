@@ -42,6 +42,9 @@ mybatis-plus:
 
 app:
   cache-enabled: ${REDIS_CACHE_ENABLED:false}
+  memory:
+    trash-retention-days: ${MEMORY_TRASH_RETENTION_DAYS:30}
+    trash-purge-cron: ${MEMORY_TRASH_PURGE_CRON:0 20 3 * * *}
   demo-data:
     enabled: ${DEMO_DATA_ENABLED:false}
   admin:

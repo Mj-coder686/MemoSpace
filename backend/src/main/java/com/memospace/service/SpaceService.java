@@ -23,7 +23,7 @@ public class SpaceService {
     public List<Map<String, Object>> list(long userId) {
         List<Map<String, Object>> spaces = jdbc.queryForList(baseSelect() +
                 " JOIN space_member sm ON sm.space_id=s.id WHERE sm.user_id=? ORDER BY s.space_type,s.created_at DESC", userId);
-        spaces.forEach(this::decorate);
+        spaces.forEach(space -> decorate(space, userId));
         return spaces;
     }
 
@@ -32,7 +32,7 @@ public class SpaceService {
         List<Map<String, Object>> rows = jdbc.queryForList(baseSelect() + " WHERE s.id=?", spaceId);
         if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "空间不存在");
         Map<String, Object> space = new LinkedHashMap<>(rows.get(0));
-        decorate(space);
+        decorate(space, userId);
         space.put("members", jdbc.queryForList("SELECT u.id,u.nickname,u.avatar,u.bio FROM space_member sm JOIN user_account u ON u.id=sm.user_id WHERE sm.space_id=?", spaceId));
         space.put("anniversaries", jdbc.queryForList("SELECT id,title,anniversary_date,repeat_yearly FROM anniversary WHERE space_id=? ORDER BY anniversary_date", spaceId));
         return space;
@@ -46,7 +46,9 @@ public class SpaceService {
                 "(SELECT fr.id FROM memory_media mm JOIN file_record fr ON fr.object_key=mm.object_key WHERE mm.memory_id=m.id ORDER BY mm.sort_order,mm.id LIMIT 1) AS cover_file_id," +
                 "(SELECT fr.mime_type FROM memory_media mm JOIN file_record fr ON fr.object_key=mm.object_key WHERE mm.memory_id=m.id ORDER BY mm.sort_order,mm.id LIMIT 1) AS cover_mime_type " +
                 "FROM memory_space ms JOIN memory m ON m.id=ms.memory_id JOIN user_account u ON u.id=m.creator_id " +
-                "WHERE ms.space_id=? ORDER BY m.occurred_at DESC", spaceId);
+                "WHERE ms.space_id=? AND m.deleted_at IS NULL AND (m.creator_id=? OR m.visibility IN ('PUBLIC','RELATIONSHIP') OR " +
+                "(m.visibility='CUSTOM' AND EXISTS(SELECT 1 FROM memory_custom_viewer cv WHERE cv.memory_id=m.id AND cv.user_id=?))) " +
+                "ORDER BY m.occurred_at DESC", spaceId, userId, userId);
     }
 
     @Transactional
@@ -114,10 +116,12 @@ public class SpaceService {
         return value;
     }
 
-    private void decorate(Map<String, Object> space) {
+    private void decorate(Map<String, Object> space, long userId) {
         long id = ((Number) space.get("id")).longValue();
-        space.put("memoryCount", jdbc.queryForObject("SELECT COUNT(*) FROM memory_space WHERE space_id=?", Long.class, id));
-        space.put("photoCount", jdbc.queryForObject("SELECT COUNT(*) FROM memory_space ms JOIN memory m ON m.id=ms.memory_id WHERE ms.space_id=? AND m.memory_type IN ('PHOTO','MIXED')", Long.class, id));
-        space.put("placeCount", jdbc.queryForObject("SELECT COUNT(DISTINCT m.location) FROM memory_space ms JOIN memory m ON m.id=ms.memory_id WHERE ms.space_id=? AND m.location IS NOT NULL", Long.class, id));
+        String visible = " AND (m.creator_id=? OR m.visibility IN ('PUBLIC','RELATIONSHIP') OR " +
+                "(m.visibility='CUSTOM' AND EXISTS(SELECT 1 FROM memory_custom_viewer cv WHERE cv.memory_id=m.id AND cv.user_id=?)))";
+        space.put("memoryCount", jdbc.queryForObject("SELECT COUNT(*) FROM memory_space ms JOIN memory m ON m.id=ms.memory_id WHERE ms.space_id=? AND m.deleted_at IS NULL" + visible, Long.class, id, userId, userId));
+        space.put("photoCount", jdbc.queryForObject("SELECT COUNT(*) FROM memory_space ms JOIN memory m ON m.id=ms.memory_id WHERE ms.space_id=? AND m.deleted_at IS NULL AND m.memory_type IN ('PHOTO','MIXED')" + visible, Long.class, id, userId, userId));
+        space.put("placeCount", jdbc.queryForObject("SELECT COUNT(DISTINCT m.location) FROM memory_space ms JOIN memory m ON m.id=ms.memory_id WHERE ms.space_id=? AND m.deleted_at IS NULL AND m.location IS NOT NULL" + visible, Long.class, id, userId, userId));
     }
 }

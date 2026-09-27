@@ -37,13 +37,14 @@ public class MemoryController {
 
     @PutMapping("/memories/{id}")
     public Map<String, Object> update(@PathVariable long id, @RequestBody UpdateMemoryRequest request) {
-        return memories.update(CurrentUser.id(), id, request.title(), request.content(), request.visibility());
+        return memories.update(CurrentUser.id(), id, request.title(), request.content(), request.visibility(),
+                request.spaceIds(), request.customViewerIds());
     }
 
     @DeleteMapping("/memories/{id}")
     public Map<String, String> delete(@PathVariable long id) {
         memories.delete(CurrentUser.id(), id);
-        return Map.of("message", "记忆已删除");
+        return Map.of("message", "记忆已移入回收区");
     }
 
     @GetMapping("/feed")
@@ -74,5 +75,6 @@ public class MemoryController {
                                 Double latitude, Double longitude, @NotBlank String visibility,
                                 List<Long> spaceIds, List<Long> customViewerIds, List<Long> fileIds) {}
 
-    public record UpdateMemoryRequest(@Size(max = 160) String title, @Size(max = 10000) String content, String visibility) {}
+    public record UpdateMemoryRequest(@Size(max = 160) String title, @Size(max = 10000) String content,
+                                      String visibility, List<Long> spaceIds, List<Long> customViewerIds) {}
 }

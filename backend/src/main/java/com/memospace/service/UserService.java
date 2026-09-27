@@ -39,7 +39,7 @@ public class UserService {
         List<Map<String, Object>> rows = jdbc.queryForList("SELECT u.id,u.public_id,u.username,u.nickname,u.avatar,u.bio,u.location,u.created_at," +
                 "(SELECT COUNT(*) FROM user_follow WHERE following_id=u.id) AS followers," +
                 "(SELECT COUNT(*) FROM user_follow WHERE follower_id=u.id) AS following," +
-                "(SELECT COUNT(*) FROM memory WHERE creator_id=u.id AND visibility='PUBLIC') AS public_memories," +
+                "(SELECT COUNT(*) FROM memory WHERE creator_id=u.id AND visibility='PUBLIC' AND deleted_at IS NULL) AS public_memories," +
                 "CASE WHEN EXISTS(SELECT 1 FROM user_follow WHERE follower_id=? AND following_id=u.id) THEN TRUE ELSE FALSE END AS is_following " +
                 "FROM user_account u WHERE u.id=? AND u.is_admin=FALSE", viewer, userId);
         if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "用户不存在");

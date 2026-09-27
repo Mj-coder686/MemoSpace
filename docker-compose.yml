@@ -67,6 +67,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-memospace_minio}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-memospace_minio_2026}
       MINIO_BUCKET: ${MINIO_BUCKET:-memospace-private}
+      MEMORY_TRASH_RETENTION_DAYS: ${MEMORY_TRASH_RETENTION_DAYS:-30}
       JWT_SECRET: ${JWT_SECRET:-MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
       FLYWAY_BASELINE_ON_MIGRATE: ${FLYWAY_BASELINE_ON_MIGRATE:-true}
       DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-false}

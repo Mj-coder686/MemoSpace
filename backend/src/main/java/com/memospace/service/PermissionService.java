@@ -22,7 +22,7 @@ public class PermissionService {
     }
 
     public boolean canViewMemory(long userId, long memoryId) {
-        var rows = jdbc.queryForList("SELECT creator_id,visibility FROM memory WHERE id=?", memoryId);
+        var rows = jdbc.queryForList("SELECT creator_id,visibility FROM memory WHERE id=? AND deleted_at IS NULL", memoryId);
         if (rows.isEmpty()) return false;
         Map<String, Object> memory = rows.get(0);
         long creatorId = ((Number) memory.get("creator_id")).longValue();
@@ -39,7 +39,7 @@ public class PermissionService {
     }
 
     public boolean canEditMemory(long userId, long memoryId) {
-        return count("SELECT COUNT(*) FROM memory WHERE id=? AND creator_id=?", memoryId, userId) > 0;
+        return count("SELECT COUNT(*) FROM memory WHERE id=? AND creator_id=? AND deleted_at IS NULL", memoryId, userId) > 0;
     }
 
     public void requireSpaceAccess(long userId, long spaceId) {

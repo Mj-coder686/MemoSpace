@@ -63,7 +63,9 @@ public class RelationshipCategoryService {
         return jdbc.queryForList("SELECT r.id AS relationship_id,r.relationship_type,r.established_at,r.status AS relationship_status," +
                         "other_user.id AS user_id,other_user.username,other_user.nickname,other_user.avatar,other_user.bio,other_user.location," +
                         "s.id AS space_id,s.name AS space_name,s.status AS space_status,s.cover_url," +
-                        "(SELECT COUNT(*) FROM memory_space ms WHERE ms.space_id=s.id) AS memory_count " +
+                        "(SELECT COUNT(*) FROM memory_space ms JOIN memory m ON m.id=ms.memory_id WHERE ms.space_id=s.id AND m.deleted_at IS NULL " +
+                        "AND (m.creator_id=? OR m.visibility IN ('PUBLIC','RELATIONSHIP') OR " +
+                        "(m.visibility='CUSTOM' AND EXISTS(SELECT 1 FROM memory_custom_viewer cv WHERE cv.memory_id=m.id AND cv.user_id=?)))) AS memory_count " +
                         "FROM relationship_category_link l " +
                         "JOIN relationships r ON r.id=l.relationship_id AND r.status='ACTIVE' " +
                         "JOIN relationship_member mine ON mine.relationship_id=r.id AND mine.user_id=? " +
@@ -71,7 +73,7 @@ public class RelationshipCategoryService {
                         "JOIN user_account other_user ON other_user.id=theirs.user_id " +
                         "LEFT JOIN space s ON s.relationship_id=r.id " +
                         "WHERE l.category_id=? ORDER BY r.established_at DESC,other_user.nickname",
-                userId, userId, categoryId);
+                userId, userId, userId, userId, categoryId);
     }
 
     @Transactional

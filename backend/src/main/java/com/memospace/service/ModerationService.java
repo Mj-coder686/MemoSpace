@@ -24,11 +24,14 @@ public class ModerationService {
     private final JdbcTemplate jdbc;
     private final PermissionService permission;
     private final ObjectMapper json;
+    private final FeedCacheService feedCache;
 
-    public ModerationService(JdbcTemplate jdbc, PermissionService permission, ObjectMapper json) {
+    public ModerationService(JdbcTemplate jdbc, PermissionService permission, ObjectMapper json,
+                             FeedCacheService feedCache) {
         this.jdbc = jdbc;
         this.permission = permission;
         this.json = json;
+        this.feedCache = feedCache;
     }
 
     @Transactional
@@ -86,7 +89,7 @@ public class ModerationService {
         String type = String.valueOf(result.get("target_type"));
         long targetId = ((Number) result.get("target_id")).longValue();
         List<Map<String, Object>> live = "MEMORY".equals(type)
-                ? jdbc.queryForList("SELECT m.id,m.title,m.content,m.visibility,m.location,m.occurred_at,u.nickname AS creator_nickname FROM memory m JOIN user_account u ON u.id=m.creator_id WHERE m.id=?", targetId)
+                ? jdbc.queryForList("SELECT m.id,m.title,m.content,m.visibility,m.location,m.occurred_at,m.deleted_at,u.nickname AS creator_nickname FROM memory m JOIN user_account u ON u.id=m.creator_id WHERE m.id=?", targetId)
                 : jdbc.queryForList("SELECT c.id,c.content,c.created_at,c.memory_id,m.title AS memory_title,u.nickname AS creator_nickname FROM comments c JOIN memory m ON m.id=c.memory_id JOIN user_account u ON u.id=c.user_id WHERE c.id=?", targetId);
         result.put("target", live.isEmpty() ? parseSnapshot(String.valueOf(result.get("target_snapshot"))) : live.get(0));
         if ("MEMORY".equals(type) && !live.isEmpty()) {
@@ -162,11 +165,11 @@ public class ModerationService {
     private Target target(long reporterId, String type, long id) {
         if ("MEMORY".equals(type)) {
             permission.requireView(reporterId, id);
-            List<Map<String, Object>> rows = jdbc.queryForList("SELECT id,creator_id,title,content,visibility,location,occurred_at FROM memory WHERE id=?", id);
+            List<Map<String, Object>> rows = jdbc.queryForList("SELECT id,creator_id,title,content,visibility,location,occurred_at FROM memory WHERE id=? AND deleted_at IS NULL", id);
             if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "记忆不存在");
             return new Target(number(rows.get(0), "creator_id"), rows.get(0));
         }
-        List<Map<String, Object>> rows = jdbc.queryForList("SELECT c.id,c.user_id,c.content,c.created_at,c.memory_id,m.title AS memory_title FROM comments c JOIN memory m ON m.id=c.memory_id WHERE c.id=?", id);
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT c.id,c.user_id,c.content,c.created_at,c.memory_id,m.title AS memory_title FROM comments c JOIN memory m ON m.id=c.memory_id WHERE c.id=? AND m.deleted_at IS NULL", id);
         if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "评论不存在");
         permission.requireView(reporterId, number(rows.get(0), "memory_id"));
         return new Target(number(rows.get(0), "user_id"), rows.get(0));
@@ -184,9 +187,12 @@ public class ModerationService {
     }
 
     private void deleteTarget(String type, long targetId) {
-        int changed = "MEMORY".equals(type)
-                ? jdbc.update("DELETE FROM memory WHERE id=?", targetId)
-                : jdbc.update("DELETE FROM comments WHERE id=?", targetId);
+        int changed;
+        if ("MEMORY".equals(type)) {
+            changed = jdbc.update("UPDATE memory SET deleted_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL", targetId);
+            jdbc.update("UPDATE post SET status='REMOVED' WHERE memory_id=?", targetId);
+            feedCache.invalidateAll();
+        } else changed = jdbc.update("DELETE FROM comments WHERE id=?", targetId);
         if (changed == 0) throw new ApiException(HttpStatus.CONFLICT, "被举报内容已经不存在");
     }
 
