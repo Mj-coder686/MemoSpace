@@ -156,20 +156,29 @@
   transition: transform var(--motion-base) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 }
 
-.archive-memory-card__delete {
+.archive-memory-card__actions {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
   z-index: 3;
-  color: var(--color-danger-fg);
-  background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+  display: flex;
+  gap: var(--space-2);
   opacity: 0;
   transform: scale(.96);
   transition: opacity var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
 }
 
-.archive-memory-card:hover .archive-memory-card__delete,
-.archive-memory-card:focus-within .archive-memory-card__delete {
+.archive-memory-card__actions .ui-icon-button {
+  color: var(--color-danger-fg);
+  background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+}
+
+.archive-memory-card__actions .archive-memory-card__visibility {
+  color: var(--color-text-primary);
+}
+
+.archive-memory-card:hover .archive-memory-card__actions,
+.archive-memory-card:focus-within .archive-memory-card__actions {
   opacity: 1;
   transform: scale(1);
 }
@@ -206,7 +215,35 @@
   padding-top: var(--space-4);
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   border-top: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.memory-visibility-editor,
+.memory-visibility-spaces {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.memory-visibility-spaces {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.memory-visibility-spaces h3,
+.memory-visibility-spaces p {
+  margin: 0;
+}
+
+.memory-visibility-spaces > p {
+  color: var(--color-text-secondary);
+}
+
+.memory-visibility-spaces > div {
+  display: grid;
+  gap: var(--space-2);
 }
 
 .archive-memory-card:hover {
@@ -433,7 +470,7 @@
 }
 
 @media (hover: none) {
-  .archive-memory-card__delete {
+  .archive-memory-card__actions {
     opacity: 1;
     transform: none;
   }

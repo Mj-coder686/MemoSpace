@@ -30,7 +30,7 @@ const remove = async () => {
   <UiDialog
     :open="Boolean(memory)"
     title="删除这条记忆？"
-    description="删除后无法恢复。"
+    description="删除后会立即隐藏，并在回收保留期结束后彻底清理。"
     :busy="busy"
     @close="emit('close')"
   >
@@ -38,7 +38,7 @@ const remove = async () => {
       <span class="memory-delete-confirmation__icon" aria-hidden="true"><Trash2 :size="22" /></span>
       <div>
         <strong>{{ memory.title }}</strong>
-        <p>它会同时从你的记忆库、公开动态和所属空间中移除，相关评论与回应也会一起删除。</p>
+        <p>它会立即从记忆库、公开动态和所属空间中隐藏；保留期结束后，关联媒体也会一并彻底清理。</p>
       </div>
     </div>
     <UiBanner v-if="failure" tone="danger" title="没有删除成功" :description="failure" />

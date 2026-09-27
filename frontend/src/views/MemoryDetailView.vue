@@ -3,12 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import {
-  ArrowLeft, Bookmark, Flag, Globe2, LockKeyhole, MapPin, MessageCircle, RefreshCw, Send, Trash2, UsersRound,
+  ArrowLeft, Bookmark, Eye, Flag, Globe2, LockKeyhole, MapPin, MessageCircle, RefreshCw, Send, Trash2, UsersRound,
 } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import PrivateMedia from '../components/PrivateMedia.vue'
 import ReportModal from '../components/ReportModal.vue'
 import MemoryDeleteDialog from '../components/MemoryDeleteDialog.vue'
+import MemoryVisibilityDialog from '../components/MemoryVisibilityDialog.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { UiBanner, UiButton, UiDialog, UiSkeleton } from '../components/ui'
 import { useAuthStore } from '../stores/auth'
@@ -29,6 +30,7 @@ const actionBusy = ref(false)
 const reportTarget = ref<{ type: 'MEMORY' | 'COMMENT'; id: number; title: string } | null>(null)
 const previewMedia = ref<any | null>(null)
 const deleteTarget = ref<any | null>(null)
+const visibilityTarget = ref<any | null>(null)
 const isOwner = computed(() => Number(memory.value?.creator_id) === Number(auth.user?.id))
 
 const visibility = computed(() => ({
@@ -108,6 +110,12 @@ const deleted = async () => {
   deleteTarget.value = null
   await router.replace('/memories')
 }
+
+const visibilityUpdated = (updated: any) => {
+  memory.value = updated
+  visibilityTarget.value = null
+  statusMessage.value = `可见范围已调整为${updated.visibility === 'PUBLIC' ? '公开' : updated.visibility === 'RELATIONSHIP' ? '关系成员可见' : '仅自己可见'}。`
+}
 </script>
 
 <template>
@@ -184,6 +192,7 @@ const deleted = async () => {
 
           <button v-if="memory.creator_id !== auth.user?.id" class="memory-report-entry" type="button" @click="reportTarget = { type: 'MEMORY', id, title: memory.title }"><Flag :size="14" />举报这条记忆</button>
           <div v-if="isOwner" class="memory-owner-actions">
+            <UiButton variant="secondary" size="sm" @click="visibilityTarget = memory"><Eye :size="16" />调整可见范围</UiButton>
             <UiButton variant="danger" size="sm" @click="deleteTarget = memory"><Trash2 :size="16" />删除这条记忆</UiButton>
           </div>
         </article>
@@ -234,5 +243,6 @@ const deleted = async () => {
 
     <ReportModal v-if="reportTarget" :target-type="reportTarget.type" :target-id="reportTarget.id" :target-title="reportTarget.title" @close="reportTarget = null" @reported="reported" />
     <MemoryDeleteDialog :memory="deleteTarget" @close="deleteTarget = null" @deleted="deleted" />
+    <MemoryVisibilityDialog :memory="visibilityTarget" @close="visibilityTarget = null" @updated="visibilityUpdated" />
   </div>
 </template>

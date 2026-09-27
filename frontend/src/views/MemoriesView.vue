@@ -5,6 +5,7 @@ import { Plus, Search, X } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import MemoryCard from '../components/MemoryCard.vue'
 import MemoryDeleteDialog from '../components/MemoryDeleteDialog.vue'
+import MemoryVisibilityDialog from '../components/MemoryVisibilityDialog.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { UiBanner, UiButton, UiChip, UiSkeleton } from '../components/ui'
 
@@ -17,7 +18,9 @@ const type = ref('ALL')
 const loading = ref(true)
 const pageError = ref('')
 const statusMessage = ref('')
+const statusTitle = ref('操作已完成')
 const deleteTarget = ref<any | null>(null)
+const visibilityTarget = ref<any | null>(null)
 
 const typeOptions = [
   { value: 'ALL', label: '全部' },
@@ -60,7 +63,14 @@ const openCreate = () => window.dispatchEvent(new CustomEvent('memospace-open-cr
 const deleted = (memory: any) => {
   memories.value = memories.value.filter((item) => Number(item.id) !== Number(memory.id))
   deleteTarget.value = null
+  statusTitle.value = '记忆已删除'
   statusMessage.value = `“${memory.title}”已删除。`
+}
+const visibilityUpdated = (memory: any) => {
+  memories.value = memories.value.map((item) => Number(item.id) === Number(memory.id) ? memory : item)
+  visibilityTarget.value = null
+  statusTitle.value = '可见范围已更新'
+  statusMessage.value = `“${memory.title}”现在是${memory.visibility === 'PUBLIC' ? '公开' : memory.visibility === 'RELATIONSHIP' ? '关系成员可见' : '仅自己可见'}。`
 }
 
 watch(() => route.query.q, (value) => {
@@ -82,7 +92,7 @@ onMounted(load)
       <UiButton variant="primary" size="lg" @click="openCreate"><Plus :size="18" />记录此刻</UiButton>
     </header>
 
-    <UiBanner v-if="statusMessage" tone="success" title="记忆已删除" :description="statusMessage" />
+    <UiBanner v-if="statusMessage" tone="success" :title="statusTitle" :description="statusMessage" />
 
     <section class="memory-archive-tools" aria-label="搜索与筛选">
       <form class="memory-search" role="search" @submit.prevent="search">
@@ -115,7 +125,7 @@ onMounted(load)
     />
 
     <div v-else-if="filtered.length" class="memory-archive-grid">
-      <MemoryCard v-for="item in filtered" :key="item.id" :memory="item" can-delete @request-delete="deleteTarget = $event" />
+      <MemoryCard v-for="item in filtered" :key="item.id" :memory="item" can-delete @request-delete="deleteTarget = $event" @request-visibility="visibilityTarget = $event" />
     </div>
 
     <EmptyState
@@ -145,5 +155,6 @@ onMounted(load)
     />
 
     <MemoryDeleteDialog :memory="deleteTarget" @close="deleteTarget = null" @deleted="deleted" />
+    <MemoryVisibilityDialog :memory="visibilityTarget" @close="visibilityTarget = null" @updated="visibilityUpdated" />
   </div>
 </template>

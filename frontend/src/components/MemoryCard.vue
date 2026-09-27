@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import dayjs from 'dayjs'
-import { Globe2, LockKeyhole, MapPin, MessageCircle, Trash2, UsersRound } from 'lucide-vue-next'
+import { Eye, Globe2, LockKeyhole, MapPin, MessageCircle, Trash2, UsersRound } from 'lucide-vue-next'
 import PrivateMedia from './PrivateMedia.vue'
 import UiIconButton from './ui/UiIconButton.vue'
 
 const props = withDefaults(defineProps<{ memory: any; compact?: boolean; canDelete?: boolean }>(), { compact: false, canDelete: false })
-const emit = defineEmits<{ requestDelete: [memory: any] }>()
+const emit = defineEmits<{ requestDelete: [memory: any]; requestVisibility: [memory: any] }>()
 const typeLabel: Record<string, string> = { PHOTO: '照片', VIDEO: '影像', TEXT: '文字', EVENT: '事件', LOCATION: '地点', MIXED: '图文' }
 const visibility = computed(() => ({
   PRIVATE: { label: '仅自己', icon: LockKeyhole },
@@ -73,15 +73,24 @@ onBeforeUnmount(clearPress)
     @pointercancel="clearPress"
     @contextmenu="onContextMenu"
   >
-    <UiIconButton
-      v-if="canDelete"
-      class="archive-memory-card__delete"
-      variant="secondary"
-      size="md"
-      :label="`删除记忆：${memory.title}`"
-      @pointerdown.stop
-      @click.stop="requestDelete"
-    ><Trash2 :size="18" aria-hidden="true" /></UiIconButton>
+    <div v-if="canDelete" class="archive-memory-card__actions">
+      <UiIconButton
+        class="archive-memory-card__visibility"
+        variant="secondary"
+        size="md"
+        :label="`调整可见范围：${memory.title}`"
+        @pointerdown.stop
+        @click.stop="emit('requestVisibility', memory)"
+      ><Eye :size="18" aria-hidden="true" /></UiIconButton>
+      <UiIconButton
+        class="archive-memory-card__delete"
+        variant="secondary"
+        size="md"
+        :label="`删除记忆：${memory.title}`"
+        @pointerdown.stop
+        @click.stop="requestDelete"
+      ><Trash2 :size="18" aria-hidden="true" /></UiIconButton>
+    </div>
     <router-link :to="`/memory/${memory.id}`" :aria-label="`打开记忆：${memory.title}`" @click="onOpen">
       <div v-if="memory.cover_file_id" class="archive-memory-card__visual">
         <PrivateMedia :file-id="memory.cover_file_id" :mime-type="memory.cover_mime_type" :alt="memory.title" preview />

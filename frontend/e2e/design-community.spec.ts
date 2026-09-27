@@ -18,6 +18,7 @@ const routeCommunity = async (page: Page) => {
   const feedScopes: string[] = []
   const followTargets: number[] = []
   const deletedIds: number[] = []
+  const visibilityBodies: any[] = []
   await page.route('**/api/**', async route => {
     const request = route.request()
     const url = new URL(request.url())
@@ -31,11 +32,16 @@ const routeCommunity = async (page: Page) => {
     if (url.pathname === '/api/users/8') return route.fulfill({ json: { id: 8, public_id: '10000008', username: 'xiaolan', nickname: '小岚', avatar: '', bio: '一起认真生活。', location: '杭州', followers: 12, following: 7, public_memories: 1, is_following: false } })
     if (url.pathname === '/api/users/8/follow') { followTargets.push(8); return route.fulfill({ json: { following: true } }) }
     if (url.pathname === '/api/memories/803' && request.method() === 'DELETE') { deletedIds.push(803); return route.fulfill({ json: { message: '记忆已删除' } }) }
+    if (url.pathname === '/api/memories/803' && request.method() === 'PUT') {
+      const body = request.postDataJSON()
+      visibilityBodies.push(body)
+      return route.fulfill({ json: { ...feed[0], visibility: body.visibility, spaces: [] } })
+    }
     if (url.pathname === '/api/memories') return route.fulfill({ json: [{ id: 701, creator_id: 7, title: '我的清晨', content: '第一束光落在桌面。', memory_type: 'TEXT', visibility: 'PRIVATE', occurred_at: '2026-09-25T07:00:00', creator_nickname: '阿遥' }] })
     if (url.pathname.includes('/users/me/appearance')) return route.fulfill({ json: {} })
     return route.fulfill({ json: [] })
   })
-  return { feedScopes, followTargets, deletedIds }
+  return { feedScopes, followTargets, deletedIds, visibilityBodies }
 }
 
 test('public feed keeps people search separate from memories and preserves relationship consent', async ({ page }) => {
@@ -75,6 +81,8 @@ test('public feed only allows the owner to delete their own memory', async ({ pa
 
   await expect(page.getByRole('button', { name: '删除记忆：我的夜晚' })).toBeVisible()
   await expect(page.getByRole('button', { name: '删除记忆：雨后散步' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '调整可见范围：我的夜晚' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '调整可见范围：雨后散步' })).toHaveCount(0)
   await page.getByRole('button', { name: '删除记忆：我的夜晚' }).click()
   const dialog = page.getByRole('dialog', { name: '删除这条记忆？' })
   await expect(dialog).toBeVisible()
@@ -83,6 +91,21 @@ test('public feed only allows the owner to delete their own memory', async ({ pa
   await expect(page.getByRole('heading', { name: '我的夜晚' })).toHaveCount(0)
   await expect(page.getByText('“我的夜晚”已从动态和记忆库中删除。')).toBeVisible()
   expect(capture.deletedIds).toEqual([803])
+})
+
+test('owner can hide a published feed item without deleting it', async ({ page }) => {
+  await seedSession(page)
+  const capture = await routeCommunity(page)
+  await page.goto('/explore')
+
+  await page.getByRole('button', { name: '调整可见范围：我的夜晚' }).click()
+  const dialog = page.getByRole('dialog', { name: '调整谁可以看见' })
+  await dialog.getByLabel('仅自己').check()
+  await dialog.getByRole('button', { name: '保存可见范围' }).click()
+
+  await expect(page.getByRole('heading', { name: '我的夜晚' })).toHaveCount(0)
+  await expect(page.getByText('“我的夜晚”已从公共动态隐藏。')).toBeVisible()
+  expect(capture.visibilityBodies).toEqual([{ visibility: 'PRIVATE' }])
 })
 
 test('other profile only renders public feed items and keeps follow and relationship actions distinct', async ({ page }) => {

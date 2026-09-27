@@ -32,7 +32,7 @@ const detail = {
   ...memories[0],
   creator_id: 7,
   media: [{ id: 1, file_id: 901, mime_type: 'image/png' }],
-  spaces: [{ id: 2, name: '和小岚的共同空间' }],
+  spaces: [{ id: 2, name: '和小岚的共同空间', space_type: 'RELATIONSHIP', status: 'ACTIVE' }],
   reactions: [{ reaction_type: '❤️', count: 3 }],
   comments: [{ id: 81, user_id: 8, nickname: '小岚', content: '我也记得那天的风。', created_at: '2026-08-24T20:00:00' }],
 }
@@ -44,8 +44,9 @@ const seedSession = async (page: Page) => {
   })
 }
 
-const routeMemory = async (page: Page, options: { detailStatus?: number; commentFails?: boolean } = {}) => {
+const routeMemory = async (page: Page, options: { detailStatus?: number; commentFails?: boolean; relationshipSpaces?: boolean } = {}) => {
   const deletedIds: number[] = []
+  const visibilityBodies: any[] = []
   await page.route('**/api/**', async (route) => {
     const request = route.request()
     const url = new URL(request.url())
@@ -59,6 +60,11 @@ const routeMemory = async (page: Page, options: { detailStatus?: number; comment
       if (options.detailStatus) return route.fulfill({ status: options.detailStatus, json: { message: 'sensitive server detail must not leak' } })
       return route.fulfill({ json: detail })
     }
+    if (url.pathname === '/api/memories/11' && request.method() === 'PUT') {
+      const body = request.postDataJSON()
+      visibilityBodies.push(body)
+      return route.fulfill({ json: { ...detail, visibility: body.visibility, spaces: body.visibility === 'RELATIONSHIP' ? detail.spaces : [] } })
+    }
     if (url.pathname === '/api/memories/11' && request.method() === 'DELETE') {
       deletedIds.push(11)
       return route.fulfill({ json: { message: '记忆已删除' } })
@@ -68,11 +74,11 @@ const routeMemory = async (page: Page, options: { detailStatus?: number; comment
       return route.fulfill({ json: { id: 99 } })
     }
     if (url.pathname === '/api/files/901/content') return route.fulfill({ status: 200, contentType: 'image/png', body: pixel })
-    if (url.pathname === '/api/spaces') return route.fulfill({ json: [] })
+    if (url.pathname === '/api/spaces') return route.fulfill({ json: options.relationshipSpaces ? [{ id: 2, name: '和小岚的共同空间', space_type: 'RELATIONSHIP', status: 'ACTIVE' }] : [] })
     if (url.pathname.includes('/users/me/appearance')) return route.fulfill({ json: {} })
     return route.fulfill({ json: [] })
   })
-  return { deletedIds }
+  return { deletedIds, visibilityBodies }
 }
 
 test('memory archive searches, filters, and opens a validated creation flow', async ({ page }) => {
@@ -131,6 +137,22 @@ test('memory detail loads protected media and failed comments keep the draft', a
   await expect(composer).toHaveValue('这句话在失败后也不能消失')
 })
 
+test('owner can change a published memory visibility after creation', async ({ page }) => {
+  await seedSession(page)
+  const capture = await routeMemory(page, { relationshipSpaces: true })
+  await page.goto('/memory/11')
+
+  await page.getByRole('button', { name: '调整可见范围', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: '调整谁可以看见' })
+  await expect(dialog).toBeVisible()
+  await dialog.getByLabel('仅自己').check()
+  await dialog.getByRole('button', { name: '保存可见范围' }).click()
+
+  await expect(page.getByText('仅自己可见', { exact: true })).toBeVisible()
+  await expect(page.getByText('可见范围已调整为仅自己可见。')).toBeVisible()
+  expect(capture.visibilityBodies).toEqual([{ visibility: 'PRIVATE' }])
+})
+
 test('owned memory supports touch long-press deletion with explicit confirmation', async ({ page }) => {
   await seedSession(page)
   const capture = await routeMemory(page)
@@ -146,7 +168,7 @@ test('owned memory supports touch long-press deletion with explicit confirmation
 
   const dialog = page.getByRole('dialog', { name: '删除这条记忆？' })
   await expect(dialog).toBeVisible()
-  await expect(dialog).toContainText('公开动态和所属空间中移除')
+  await expect(dialog).toContainText('公开动态和所属空间中隐藏')
   await dialog.getByRole('button', { name: '确认删除' }).click()
 
   await expect(page.getByRole('heading', { name: '江边的晚风' })).toHaveCount(0)
