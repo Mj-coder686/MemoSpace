@@ -16,7 +16,10 @@ const config: CapacitorConfig = {
   },
   plugins: {
     CapacitorHttp: { enabled: true },
-    StatusBar: { style: 'DARK', backgroundColor: '#f5f2ec', overlaysWebView: false },
+    // Capacitor LIGHT means dark system icons, which is the readable launch
+    // state on MemoSpace's default light canvas. Runtime theming takes over
+    // once the WebView has loaded.
+    StatusBar: { style: 'LIGHT', backgroundColor: '#faf7f2', overlaysWebView: false },
     Keyboard: { resize: 'native' },
     SplashScreen: { launchAutoHide: true, launchShowDuration: 1200, backgroundColor: '#f5f2ec' },
   },

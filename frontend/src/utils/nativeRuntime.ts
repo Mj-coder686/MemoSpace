@@ -26,13 +26,20 @@ export const initializeNativeRuntime = async (router: Router) => {
     const explicitMode = document.documentElement.dataset.mode
     const dark = explicitMode === 'dark' || (!explicitMode && systemDark.matches)
     document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', dark ? '#181716' : '#faf7f2')
-    await safely('configure status bar style', () => StatusBar.setStyle({ style: dark ? Style.Light : Style.Dark }))
+    // Capacitor names the enum after the content brightness: Dark means light
+    // icons for a dark background, while Light means dark icons for a light
+    // background. Keep this explicit because reversing it produces white icons
+    // on MemoSpace's light canvas on Android.
+    await safely('configure status bar style', () => StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light }))
     await safely('configure status bar color', () => StatusBar.setBackgroundColor({ color: dark ? '#181716' : '#faf7f2' }))
   }
   await applyNativeTheme()
   const themeObserver = new MutationObserver(() => { void applyNativeTheme() })
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode'] })
   systemDark.addEventListener('change', () => { void applyNativeTheme() })
+  await safely('listen for app resume theme sync', () => App.addListener('appStateChange', ({ isActive }) => {
+    if (isActive) void applyNativeTheme()
+  }))
   await safely('configure keyboard', () => Keyboard.setResizeMode({ mode: KeyboardResize.Native }))
   await safely('listen for keyboard show', () => Keyboard.addListener('keyboardWillShow', ({ keyboardHeight }) => {
     document.documentElement.classList.add('keyboard-open')
