@@ -13,5 +13,8 @@ frontend/test-results/
 frontend/playwright-report/
 *.log
 frontend/android/gradle-build.*.log
+frontend/android/signing.properties
+*.jks
+*.keystore
 release/
 .DS_Store
