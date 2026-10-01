@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=eclipse-temurin:17-jre-alpine
+FROM ${BASE_IMAGE}
+WORKDIR /app
+COPY memo-space-backend-1.0.0.jar /app/app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-XX:MaxRAMPercentage=75","-jar","app.jar"]
