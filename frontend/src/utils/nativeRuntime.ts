@@ -5,6 +5,7 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import type { Router } from 'vue-router'
 import { closeTopOverlay } from '../composables/useOverlayStack'
+import { initializeNativePush } from './nativePush'
 
 export const initializeNativeRuntime = async (router: Router) => {
   if (!Capacitor.isNativePlatform()) return
@@ -41,6 +42,7 @@ export const initializeNativeRuntime = async (router: Router) => {
     if (isActive) void applyNativeTheme()
   }))
   await safely('configure keyboard', () => Keyboard.setResizeMode({ mode: KeyboardResize.Native }))
+  await safely('initialize notifications', () => initializeNativePush(router))
   await safely('listen for keyboard show', () => Keyboard.addListener('keyboardWillShow', ({ keyboardHeight }) => {
     document.documentElement.classList.add('keyboard-open')
     document.documentElement.style.setProperty('--keyboard-offset', `${keyboardHeight}px`)

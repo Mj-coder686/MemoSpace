@@ -22,12 +22,14 @@ public class ReminderScheduler {
     private final JdbcTemplate jdbc;
     private final ReminderDeliveryService delivery;
     private final ObjectProvider<RealtimeGateway> realtime;
+    private final MobilePushService mobilePush;
 
     public ReminderScheduler(JdbcTemplate jdbc, ReminderDeliveryService delivery,
-                             ObjectProvider<RealtimeGateway> realtime) {
+                             ObjectProvider<RealtimeGateway> realtime, MobilePushService mobilePush) {
         this.jdbc = jdbc;
         this.delivery = delivery;
         this.realtime = realtime;
+        this.mobilePush = mobilePush;
     }
 
     @Scheduled(fixedDelayString = "${app.reminders.scan-delay-ms:5000}",
@@ -61,6 +63,11 @@ public class ReminderScheduler {
                             log.warn("Realtime reminder delivery failed for user {}", event.userId(), ex);
                         }
                     }
+                }
+                for (ReminderDeliveryService.DeliveryEvent event : events) {
+                    String title = String.valueOf(event.payload().getOrDefault("title", "提醒时间到了"));
+                    String content = String.valueOf(event.payload().getOrDefault("note", "你设置的提醒已经到时间了"));
+                    mobilePush.send(event.userId(), "REMINDER_DUE", title, content, reminderId);
                 }
             } catch (RuntimeException ex) {
                 log.error("Reminder scan failed for reminder {}", reminderId, ex);

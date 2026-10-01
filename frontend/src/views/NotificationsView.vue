@@ -85,14 +85,16 @@ const respond = async (id: number, action: 'accept' | 'reject') => {
     await load()
   } catch (error) { message.value = errorMessage(error) }
 }
+const handleNativeNotification = () => { void load() }
 
 onMounted(async () => {
   await load()
+  window.addEventListener('memospace:notification-received', handleNativeNotification)
   unsubscribe = realtime.subscribe(event => {
     if (event.type === 'NOTIFICATION' || event.type === 'REMINDER_DUE') void load()
   })
 })
-onBeforeUnmount(() => unsubscribe?.())
+onBeforeUnmount(() => { unsubscribe?.(); window.removeEventListener('memospace:notification-received', handleNativeNotification) })
 </script>
 
 <template>

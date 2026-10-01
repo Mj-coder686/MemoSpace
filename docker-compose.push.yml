@@ -1,0 +1,8 @@
+services:
+  backend:
+    environment:
+      PUSH_ENABLED: "true"
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:?请在 .env 中设置 FIREBASE_PROJECT_ID}
+      FIREBASE_CREDENTIALS_PATH: /run/secrets/firebase-service-account.json
+    volumes:
+      - ${FIREBASE_CREDENTIALS_FILE:?请在 .env 中设置 FIREBASE_CREDENTIALS_FILE}:/run/secrets/firebase-service-account.json:ro

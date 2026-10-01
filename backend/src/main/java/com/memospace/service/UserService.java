@@ -1,6 +1,7 @@
 package com.memospace.service;
 
 import com.memospace.api.ApiException;
+import com.memospace.realtime.RealtimeNotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -12,8 +13,9 @@ import java.util.Map;
 @Service
 public class UserService {
     private final JdbcTemplate jdbc;
+    private final RealtimeNotificationPublisher realtime;
 
-    public UserService(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+    public UserService(JdbcTemplate jdbc, RealtimeNotificationPublisher realtime) { this.jdbc = jdbc; this.realtime = realtime; }
 
     public List<Map<String, Object>> search(long currentUser, String keyword) {
         String normalized = keyword == null ? "" : keyword.trim();
@@ -59,6 +61,7 @@ public class UserService {
         }
         jdbc.update("INSERT INTO user_follow(follower_id,following_id) VALUES(?,?)", userId, targetId);
         jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content) VALUES(?,?,'FOLLOW','有人关注了你','去看看 TA 的记忆空间吧')", targetId, userId);
+        realtime.publishAfterCommit(targetId, "FOLLOW", "有人关注了你", "去看看 TA 的记忆空间吧", userId);
         return true;
     }
 

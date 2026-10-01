@@ -16,5 +16,7 @@ frontend/android/gradle-build.*.log
 frontend/android/signing.properties
 *.jks
 *.keystore
+frontend/android/app/google-services.json
+deploy/firebase-service-account*.json
 release/
 .DS_Store

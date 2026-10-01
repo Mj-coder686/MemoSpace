@@ -57,6 +57,10 @@ app:
     secret: ${JWT_SECRET:MemoSpace_Local_Development_Secret_Change_Me_2026_At_Least_32_Bytes}
     expiration-hours: ${JWT_EXPIRATION_HOURS:168}
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,https://localhost,capacitor://localhost}
+  push:
+    enabled: ${PUSH_ENABLED:false}
+    credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
+    project-id: ${FIREBASE_PROJECT_ID:}
   storage:
     mode: ${STORAGE_MODE:local}
     local-path: ${LOCAL_STORAGE_PATH:./data/uploads}
@@ -64,6 +68,10 @@ app:
     access-key: ${MINIO_ACCESS_KEY:memospace_minio}
     secret-key: ${MINIO_SECRET_KEY:memospace_minio_2026}
     bucket: ${MINIO_BUCKET:memospace-private}
+    user-quota-bytes: ${STORAGE_USER_QUOTA_BYTES:5368709120}
+    thumbnail-max-pixels: ${STORAGE_THUMBNAIL_MAX_PIXELS:921600}
+    orphan-retention-hours: ${STORAGE_ORPHAN_RETENTION_HOURS:24}
+    orphan-cleanup-cron: ${STORAGE_ORPHAN_CLEANUP_CRON:0 45 3 * * *}
 
 springdoc:
   swagger-ui:

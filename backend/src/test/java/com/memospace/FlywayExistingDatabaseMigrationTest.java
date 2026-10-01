@@ -32,12 +32,15 @@ class FlywayExistingDatabaseMigrationTest {
             var users = connection.createStatement().executeQuery("SELECT COUNT(*) FROM user_account WHERE username='existing_user'");
             users.next(); assertEquals(1, users.getInt(1));
             var history = connection.createStatement().executeQuery("SELECT MAX(version) FROM flyway_schema_history WHERE success=TRUE");
-            history.next(); assertEquals("3", history.getString(1));
+            history.next(); assertEquals("5", history.getString(1));
             var columns = connection.createStatement().executeQuery("SELECT violation_count,account_status FROM user_account WHERE username='existing_user'");
             columns.next(); assertEquals(0, columns.getInt(1)); assertEquals("ACTIVE", columns.getString(2));
             var memoryColumns = connection.createStatement().executeQuery(
                     "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='memory' AND column_name='deleted_at'");
             memoryColumns.next(); assertEquals(1, memoryColumns.getInt(1));
+            var fileColumns = connection.createStatement().executeQuery(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='file_record' AND column_name='thumbnail_object_key'");
+            fileColumns.next(); assertEquals(1, fileColumns.getInt(1));
         }
     }
 }

@@ -20,6 +20,7 @@ const config: CapacitorConfig = {
     // state on MemoSpace's default light canvas. Runtime theming takes over
     // once the WebView has loaded.
     StatusBar: { style: 'LIGHT', backgroundColor: '#faf7f2', overlaysWebView: false },
+    PushNotifications: { presentationOptions: ['sound', 'alert', 'banner', 'list'] },
     Keyboard: { resize: 'native' },
     SplashScreen: { launchAutoHide: true, launchShowDuration: 1200, backgroundColor: '#f5f2ec' },
   },

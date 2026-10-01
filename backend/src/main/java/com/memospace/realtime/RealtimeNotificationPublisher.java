@@ -1,5 +1,6 @@
 package com.memospace.realtime;
 
+import com.memospace.service.MobilePushService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -10,9 +11,11 @@ import java.util.Map;
 @Component
 public class RealtimeNotificationPublisher {
     private final RealtimeGateway gateway;
+    private final MobilePushService mobilePush;
 
-    public RealtimeNotificationPublisher(RealtimeGateway gateway) {
+    public RealtimeNotificationPublisher(RealtimeGateway gateway, MobilePushService mobilePush) {
         this.gateway = gateway;
+        this.mobilePush = mobilePush;
     }
 
     public void publishAfterCommit(long userId, String notificationType, String title,
@@ -23,7 +26,10 @@ public class RealtimeNotificationPublisher {
                 "content", content,
                 "referenceId", referenceId
         );
-        Runnable publish = () -> gateway.sendToUser(userId, "NOTIFICATION", payload);
+        Runnable publish = () -> {
+            gateway.sendToUser(userId, "NOTIFICATION", payload);
+            mobilePush.send(userId, notificationType, title, content, referenceId);
+        };
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override

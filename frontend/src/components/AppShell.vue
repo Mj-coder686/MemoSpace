@@ -31,6 +31,10 @@ let unregisterCreateOverlay: (() => void) | undefined
 let noticeTimer: number | undefined
 
 const clearUnread = () => { unreadNotifications.value = 0 }
+const refreshUnread = async () => {
+  try { unreadNotifications.value = (await http.get('/notifications')).data.filter((item: any) => !item.is_read).length }
+  catch { /* Retain the current badge while offline. */ }
+}
 const navigate = (path: string) => {
   liveNotice.value = null
   void router.push(path)
@@ -70,6 +74,7 @@ watch(creating, (open) => {
 onMounted(async () => {
   window.addEventListener('scroll', updateFab, { passive: true })
   window.addEventListener('memospace-open-create', openCreate)
+  window.addEventListener('memospace:notification-received', refreshUnread)
   updateFab()
   if (!auth.token) return
   realtime.connect()
@@ -84,6 +89,7 @@ onBeforeUnmount(() => {
   window.clearTimeout(noticeTimer)
   window.removeEventListener('scroll', updateFab)
   window.removeEventListener('memospace-open-create', openCreate)
+  window.removeEventListener('memospace:notification-received', refreshUnread)
   window.removeEventListener('memospace-notifications-read', clearUnread)
   realtime.disconnect()
 })

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import http from '../api/http'
+import { refreshNativePushRegistration, unregisterNativePush } from '../utils/nativePush'
 
 export interface User {
   id: number
@@ -27,6 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = normalizeUser(data.user)
     localStorage.setItem('memospace_token', data.token)
     localStorage.setItem('memospace_user', JSON.stringify(user.value))
+    void refreshNativePushRegistration()
   }
 
   const login = async (username: string, password: string) => {
@@ -47,6 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = () => {
+    void unregisterNativePush()
     token.value = ''
     user.value = null
     localStorage.removeItem('memospace_token')

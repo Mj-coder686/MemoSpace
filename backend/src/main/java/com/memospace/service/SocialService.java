@@ -37,8 +37,11 @@ public class SocialService {
         long creator = ((Number) memory.get("creator_id")).longValue();
         if ("PRIVATE".equals(visibility) && creator != userId) throw new ApiException(HttpStatus.FORBIDDEN, "私密记忆不接受他人评论");
         long id = JdbcIds.insert(jdbc, "INSERT INTO comments(memory_id,user_id,content) VALUES(?,?,?)", memoryId, userId, content.trim());
-        if (creator != userId) jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) VALUES(?,?,'COMMENT','收到新评论',?,?)",
-                creator, userId, content.trim(), memoryId);
+        if (creator != userId) {
+            jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content,reference_id) VALUES(?,?,'COMMENT','收到新评论',?,?)",
+                    creator, userId, content.trim(), memoryId);
+            realtime.publishAfterCommit(creator, "COMMENT", "收到新评论", content.trim(), memoryId);
+        }
         return Map.of("id", id, "content", content.trim());
     }
 

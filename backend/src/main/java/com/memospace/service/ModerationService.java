@@ -3,6 +3,7 @@ package com.memospace.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memospace.api.ApiException;
+import com.memospace.realtime.RealtimeNotificationPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,13 +26,15 @@ public class ModerationService {
     private final PermissionService permission;
     private final ObjectMapper json;
     private final FeedCacheService feedCache;
+    private final RealtimeNotificationPublisher realtime;
 
     public ModerationService(JdbcTemplate jdbc, PermissionService permission, ObjectMapper json,
-                             FeedCacheService feedCache) {
+                             FeedCacheService feedCache, RealtimeNotificationPublisher realtime) {
         this.jdbc = jdbc;
         this.permission = permission;
         this.json = json;
         this.feedCache = feedCache;
+        this.realtime = realtime;
     }
 
     @Transactional
@@ -203,6 +206,7 @@ public class ModerationService {
 
     private void notifyUser(long userId, long adminId, String title, String content) {
         jdbc.update("INSERT INTO notification(user_id,actor_id,notification_type,title,content) VALUES(?,?,'MODERATION',?,?)", userId, adminId, title, content);
+        realtime.publishAfterCommit(userId, "MODERATION", title, content, 0);
     }
 
     private void audit(long adminId, long userId, String action, String detail) {
