@@ -68,12 +68,15 @@ class MediaAccessIntegrationTest {
         expectPng(ownerToken, publicFile);
         expectPng(ownerToken, privateFile);
         expectPng(ownerToken, relationshipFile);
+        expectThumbnail(ownerToken, publicFile);
         expectPng(partnerToken, publicFile);
+        expectThumbnail(partnerToken, publicFile);
         expectPng(partnerToken, relationshipFile);
         expectForbidden(partnerToken, privateFile);
         expectPng(intruderToken, publicFile);
         expectForbidden(intruderToken, privateFile);
         expectForbidden(intruderToken, relationshipFile);
+        expectThumbnailForbidden(intruderToken, relationshipFile);
 
         JsonNode mine = getJson("/api/memories", ownerToken, 200);
         assertTrue(hasCover(mine, publicMemory.get("id").asLong(), publicFile));
@@ -108,6 +111,17 @@ class MediaAccessIntegrationTest {
 
     private void expectForbidden(String token, long fileId) throws Exception {
         mvc.perform(get("/api/files/{id}/content", fileId).header("Authorization", bearer(token)))
+                .andExpect(status().isForbidden());
+    }
+
+    private void expectThumbnail(String token, long fileId) throws Exception {
+        mvc.perform(get("/api/files/{id}/thumbnail", fileId).header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_JPEG));
+    }
+
+    private void expectThumbnailForbidden(String token, long fileId) throws Exception {
+        mvc.perform(get("/api/files/{id}/thumbnail", fileId).header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
     }
 

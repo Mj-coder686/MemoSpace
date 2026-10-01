@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { Crosshair, FileImage, Image, MapPin, Type, Video, X } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import { coordinateLabel, getCurrentDevicePosition } from '../utils/geolocation'
+import { optimizeUploadImage } from '../utils/optimizeUploadImage'
 import { UiBanner, UiButton, UiCheckbox, UiDialog, UiInput, UiProgress, UiRadio, UiTextarea } from './ui'
 
 type MemoryType = 'TEXT' | 'PHOTO' | 'VIDEO' | 'LOCATION'
@@ -154,8 +155,9 @@ const submit = async () => {
     let uploadedBefore = 0
     for (const [index, file] of files.value.entries()) {
       uploadLabel.value = `正在上传 ${index + 1} / ${files.value.length}：${file.name}`
+      const uploadFile = await optimizeUploadImage(file)
       const payload = new FormData()
-      payload.append('file', file)
+      payload.append('file', uploadFile)
       const { data } = await http.post('/files', payload, {
         onUploadProgress: (progress) => {
           if (totalBytes) uploadPercent.value = ((uploadedBefore + Math.min(progress.loaded, file.size)) / totalBytes) * 100

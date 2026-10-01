@@ -20,7 +20,8 @@ const load = async () => {
   loading.value = true
   request = new AbortController()
   try {
-    const { data } = await http.get(`/files/${props.fileId}/content`, {
+    const endpoint = props.preview && props.mimeType.startsWith('image/') ? 'thumbnail' : 'content'
+    const { data } = await http.get(`/files/${props.fileId}/${endpoint}`, {
       responseType: 'blob',
       signal: request.signal,
     })

@@ -61,6 +61,9 @@ public class AdminController {
         return admin.audit(limit);
     }
 
+    @GetMapping("/storage")
+    public Map<String, Object> storage() { return files.adminStats(); }
+
     @GetMapping("/reports")
     public Map<String, Object> reports(@RequestParam(defaultValue = "PENDING") String status,
                                        @RequestParam(defaultValue = "1") @Min(1) int page,

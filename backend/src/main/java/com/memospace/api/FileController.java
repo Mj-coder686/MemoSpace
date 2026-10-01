@@ -22,14 +22,27 @@ public class FileController {
 
     @GetMapping("/{id}/content")
     public ResponseEntity<?> content(@PathVariable long id) {
-        FileStorageService.StoredFile file = files.load(CurrentUser.id(), id);
+        return response(files.load(CurrentUser.id(), id), false);
+    }
+
+    @GetMapping("/{id}/thumbnail")
+    public ResponseEntity<?> thumbnail(@PathVariable long id) {
+        return response(files.loadThumbnail(CurrentUser.id(), id), true);
+    }
+
+    @GetMapping("/usage")
+    public Map<String, Object> usage() {
+        return files.usage(CurrentUser.id());
+    }
+
+    private ResponseEntity<?> response(FileStorageService.StoredFile file, boolean cacheable) {
         MediaType type;
         try { type = MediaType.parseMediaType(file.mimeType()); }
         catch (Exception ignored) { type = MediaType.APPLICATION_OCTET_STREAM; }
         return ResponseEntity.ok()
                 .contentType(type)
                 .contentLength(file.size())
-                .cacheControl(CacheControl.noStore().cachePrivate())
+                .cacheControl(cacheable ? CacheControl.maxAge(java.time.Duration.ofHours(12)).cachePrivate() : CacheControl.noStore().cachePrivate())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(file.filename()).build().toString())
                 .body(file.resource());
     }

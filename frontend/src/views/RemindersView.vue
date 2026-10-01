@@ -13,6 +13,7 @@ import EmptyState from '../components/EmptyState.vue'
 import PrivateMedia from '../components/PrivateMedia.vue'
 import { UiBanner, UiButton, UiDialog, UiInput, UiSelect, UiSkeleton, UiTextarea } from '../components/ui'
 import { chooseNativeImage } from '../utils/nativeImagePicker'
+import { optimizeUploadImage } from '../utils/optimizeUploadImage'
 
 type Reminder = {
   id: number
@@ -142,8 +143,9 @@ const selectNativeImage = async () => {
 
 const uploadImage = async () => {
   if (!imageFile.value) return undefined
+  const uploadFile = await optimizeUploadImage(imageFile.value)
   const body = new FormData()
-  body.append('file', imageFile.value)
+  body.append('file', uploadFile)
   const { data } = await http.post('/files', body)
   return Number(data.id)
 }
