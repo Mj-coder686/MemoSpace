@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import { useRouter } from 'vue-router'
-import { CheckCircle2, Copy, Fingerprint, ImagePlus, LockKeyhole, LogOut, Palette, Server, ShieldCheck, Sparkles, Trash2, Upload } from 'lucide-vue-next'
+import { Bell, CheckCircle2, Copy, Fingerprint, HardDrive, ImagePlus, LockKeyhole, LogOut, Palette, Server, ShieldCheck, Sparkles, Trash2, Upload } from 'lucide-vue-next'
 import http, { errorMessage } from '../api/http'
 import { useAuthStore } from '../stores/auth'
 import { useRealtimeStore } from '../stores/realtime'
@@ -11,10 +11,12 @@ import UserAvatar from '../components/UserAvatar.vue'
 import { UiBanner, UiButton, UiDialog, UiInput, UiSelect, UiSkeleton, UiTextarea } from '../components/ui'
 import { imageLuminance, loadAppearance } from '../utils/appearance'
 import { chooseNativeImage } from '../utils/nativeImagePicker'
+import { optimizeUploadImage } from '../utils/optimizeUploadImage'
 import { PRODUCTION_SERVER_ORIGIN, saveServerOrigin, savedServerOrigin } from '../utils/serverConnection'
+import { enableNativePush, nativePushStatus } from '../utils/nativePush'
 
 type AppearanceForm = { backgroundColor: string; backgroundFileId: number | null; backgroundBrightness: number; backgroundOverlay: number; clearBackgroundImage: boolean }
-type SettingsSection = 'identity' | 'appearance' | 'security' | 'connection' | 'session'
+type SettingsSection = 'identity' | 'appearance' | 'security' | 'storage' | 'notifications' | 'connection' | 'session'
 
 const auth = useAuthStore()
 const realtime = useRealtimeStore()
@@ -35,6 +37,10 @@ const backgroundPreview = ref('')
 const logoutDialog = ref(false)
 const theme = ref(localStorage.getItem('memospace_mode') || 'system')
 const serverAddress = ref(savedServerOrigin())
+const pushStatus = ref(nativePushStatus())
+const pushProviderReady = ref(false)
+const pushBusy = ref(false)
+const storage = ref({ usedBytes: 0, quotaBytes: 1, remainingBytes: 1, fileCount: 0 })
 const passwordForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 const form = ref({ nickname: '', bio: '', location: '', gender: '', birthday: '' })
 const defaultBackgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-bg-canvas').trim()
@@ -51,9 +57,25 @@ const sectionItems = computed(() => [
   { id: 'identity' as const, label: '账号身份' },
   { id: 'appearance' as const, label: '外观' },
   { id: 'security' as const, label: '安全' },
+  { id: 'storage' as const, label: '存储' },
+  ...(nativeApp ? [{ id: 'notifications' as const, label: '通知' }] : []),
   ...(nativeApp ? [{ id: 'connection' as const, label: '连接' }] : []),
   { id: 'session' as const, label: '会话' },
 ])
+const pushStatusText = computed(() => {
+  if (pushStatus.value === 'ready') return '系统通知已开启，应用退出后仍可接收提醒。'
+  if (pushStatus.value === 'device-ready') return '手机权限和设备登记已完成，服务器推送凭据尚未启用。'
+  if (pushStatus.value === 'denied') return '系统通知权限已关闭，请在手机设置中允许拾光空间发送通知。'
+  if (pushStatus.value === 'registration-error') return '此安装包还没有连接 Firebase 推送项目。'
+  if (pushStatus.value === 'server-error') return '手机已允许通知，但设备登记暂时失败，请稍后重试。'
+  return '开启后，好友申请、关系邀请、评论和重要提醒会出现在手机通知栏。'
+})
+const storagePercent = computed(() => Math.min(100, Math.round(storage.value.usedBytes / Math.max(1, storage.value.quotaBytes) * 100)))
+const formatBytes = (value: number) => {
+  if (value < 1024 * 1024) return `${Math.max(0, value / 1024).toFixed(1)} KB`
+  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`
+  return `${(value / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
 const selectSection = (id: SettingsSection) => { activeSection.value = id; document.getElementById(`settings-${id}`)?.scrollIntoView({ behavior: 'smooth' }) }
 
 const success = (value: string) => { pageMessage.value = value; pageError.value = '' }
@@ -62,7 +84,7 @@ const fillForm = () => {
   if (!auth.user) return
   form.value = { nickname: auth.user.nickname, bio: auth.user.bio || '', location: auth.user.location || '', gender: auth.user.gender || '', birthday: auth.user.birthday || '' }
 }
-const upload = async (file: File) => { const body = new FormData(); body.append('file', file); return Number((await http.post('/files', body)).data.id) }
+const upload = async (file: File) => { const optimized = await optimizeUploadImage(file); const body = new FormData(); body.append('file', optimized); return Number((await http.post('/files', body)).data.id) }
 const revoke = (value: string) => { if (value) URL.revokeObjectURL(value) }
 const setAvatar = (file: File | null) => { avatarFile.value = file; revoke(avatarPreview.value); avatarPreview.value = file ? URL.createObjectURL(file) : '' }
 const chooseAvatar = (event: Event) => setAvatar((event.target as HTMLInputElement).files?.[0] || null)
@@ -130,17 +152,27 @@ const savePassword = async () => {
 const saveServer = () => {
   try { serverAddress.value = saveServerOrigin(serverAddress.value); success(`连接地址已保存：${serverAddress.value}`) } catch (error) { pageError.value = error instanceof Error ? error.message : '服务器地址格式不正确' }
 }
+const activatePush = async () => {
+  pushBusy.value = true; pageError.value = ''
+  try { await enableNativePush(true); pushStatus.value = nativePushStatus() }
+  catch (error) { fail(error) }
+  finally { pushBusy.value = false }
+}
+const syncPushStatus = (event: Event) => { pushStatus.value = String((event as CustomEvent).detail || nativePushStatus()) }
 const logout = () => { realtime.disconnect(); auth.logout(); logoutDialog.value = false; void router.push('/login') }
 
 onMounted(async () => {
+  window.addEventListener('memospace:push-status', syncPushStatus)
   try {
     await auth.loadMe(); fillForm()
     const data: any = await loadAppearance()
     appearance.value = { backgroundColor: data.background_color || defaultBackgroundColor, backgroundFileId: data.background_file_id || null, backgroundBrightness: Number(data.background_brightness ?? 100), backgroundOverlay: Number(data.background_overlay ?? 0), clearBackgroundImage: false }
     savedAppearance.value = { ...appearance.value }
+    storage.value = (await http.get('/files/usage')).data
+    if (nativeApp) { const { data } = await http.get('/push/status'); pushProviderReady.value = Boolean(data.providerConfigured) }
   } catch (error) { fail(error) } finally { loading.value = false }
 })
-onBeforeUnmount(() => { revoke(avatarPreview.value); revoke(backgroundPreview.value) })
+onBeforeUnmount(() => { window.removeEventListener('memospace:push-status', syncPushStatus); revoke(avatarPreview.value); revoke(backgroundPreview.value) })
 </script>
 
 <template>
@@ -174,6 +206,19 @@ onBeforeUnmount(() => { revoke(avatarPreview.value); revoke(backgroundPreview.va
         <section id="settings-security" class="settings-section" :class="{'is-active':activeSection==='security'}">
           <header><span class="settings-section-icon"><ShieldCheck :size="20" /></span><div><h2>安全</h2><p>旧密码不会显示，也不会被管理员读取。</p></div></header>
           <form class="settings-password-form" @submit.prevent="savePassword"><UiInput v-model="passwordForm.oldPassword" label="当前密码" name="current-password" type="password" autocomplete="current-password" revealable required /><UiInput v-model="passwordForm.newPassword" label="新密码" name="new-password" type="password" autocomplete="new-password" helper="至少 8 位" :error="passwordError" revealable required /><UiInput v-model="passwordForm.confirmPassword" label="再次输入新密码" name="confirm-password" type="password" autocomplete="new-password" :error="passwordError" revealable required /><UiButton type="submit" variant="primary" :loading="passwordBusy" loading-text="正在更新" :disabled="!passwordForm.oldPassword || !passwordForm.newPassword || Boolean(passwordError)">更新密码</UiButton></form>
+        </section>
+
+        <section id="settings-storage" class="settings-section" :class="{'is-active':activeSection==='storage'}">
+          <header><span class="settings-section-icon"><HardDrive :size="20" /></span><div><h2>存储空间</h2><p>原图会安全保存；列表页使用缩略图，减少手机流量和服务器压力。</p></div></header>
+          <div class="settings-storage-summary"><div><strong>{{ formatBytes(storage.usedBytes) }}</strong><span>已使用 / {{ formatBytes(storage.quotaBytes) }}</span></div><b>{{ storage.fileCount }} 个文件</b></div>
+          <div class="settings-storage-meter" role="progressbar" aria-label="个人存储使用量" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="storagePercent"><i :style="{ width: `${storagePercent}%` }"></i></div>
+          <p class="settings-connection-note">还可使用 {{ formatBytes(storage.remainingBytes) }}。删除记忆后会先保留恢复期，过期后再清理不再被任何内容引用的图片。</p>
+        </section>
+
+        <section v-if="nativeApp" id="settings-notifications" class="settings-section" :class="{'is-active':activeSection==='notifications'}">
+          <header><span class="settings-section-icon"><Bell :size="20" /></span><div><h2>手机通知</h2><p>{{ pushStatusText }}</p></div></header>
+          <UiBanner :tone="pushStatus==='ready' ? 'success' : pushStatus==='denied' || pushStatus.includes('error') ? 'warning' : 'info'" :title="pushStatus==='ready' ? '手机通知已就绪' : pushProviderReady ? '等待手机授权' : '等待推送服务配置'" :description="pushStatusText" />
+          <footer><UiButton variant="primary" :loading="pushBusy" loading-text="正在连接" @click="activatePush"><Bell :size="16" />开启或重新连接通知</UiButton></footer>
         </section>
 
         <section v-if="nativeApp" id="settings-connection" class="settings-section" :class="{'is-active':activeSection==='connection'}">

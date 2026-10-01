@@ -56,6 +56,13 @@
 .settings-password-form { max-width: 480px; display: grid; gap: var(--space-3); }
 .settings-password-form > .ui-button { justify-self: start; margin-top: var(--space-2); }
 .settings-connection-note { margin: var(--space-3) 0 0; color: var(--color-text-secondary); font-size: var(--type-caption-size); line-height: var(--type-body-sm-line); }
+.settings-storage-summary { display: flex; align-items: end; justify-content: space-between; gap: var(--space-4); }
+.settings-storage-summary > div { min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
+.settings-storage-summary strong { color: var(--color-text-primary); font-family: var(--font-mono); font-size: var(--type-title-lg-size); font-variant-numeric: tabular-nums; }
+.settings-storage-summary span,
+.settings-storage-summary b { color: var(--color-text-secondary); font-size: var(--type-body-sm-size); }
+.settings-storage-meter { height: 10px; margin-top: var(--space-3); overflow: hidden; background: var(--color-bg-subtle); border: var(--border-hairline) solid var(--color-border-subtle); border-radius: var(--radius-full); }
+.settings-storage-meter > i { width: 0; height: 100%; display: block; background: var(--color-action-primary); border-radius: inherit; transition: width var(--motion-base) var(--ease-out); }
 .settings-session { border-color: var(--color-border-default); }
 
 @media (max-width: 840px) {
